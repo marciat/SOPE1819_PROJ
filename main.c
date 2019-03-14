@@ -1,6 +1,4 @@
-/* 
-    Main program that will be called from the terminal
-*/
+// Main program that will be called from the terminal
 
 #include <stdio.h>
 
