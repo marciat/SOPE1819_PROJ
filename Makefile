@@ -2,11 +2,11 @@
 
 all: forensic
 
-forensic: main.o
-	gcc -o forensic main.o
+forensic: forensic.o
+	gcc -o forensic forensic.o
 
-main.o: main.c
-	gcc -o main.o main.c -c -W -pedantic
+forensic.o: forensic.c
+	gcc -o forensic.o forensic.c -c -W -pedantic
 
 clean:
 	rm -rf *.o *~ forensic
