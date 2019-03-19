@@ -24,14 +24,11 @@ int main(int argc, char *argv[], char *envp[])
 
     fore_args args = get_programs_to_execute(argc, argv);
 
-
-    
     char *logfilename;
     if (args.arg_v)
         logfilename = get_filename_var(envp);
     else
         logfilename = NULL;
-
 
     free(logfilename);
     return 0;
@@ -40,76 +37,106 @@ int main(int argc, char *argv[], char *envp[])
 fore_args get_programs_to_execute(int argc, char *argv[])
 {
     fore_args args;
-    char* h_arg = NULL;
+    char *h_arg = (char*)malloc(20*sizeof(char));
     args.h_args[0] = NULL;
     args.h_args[1] = NULL;
     args.h_args[2] = NULL;
 
-    for(int i = 1; i < argc-1; i++){
-        if(strcmp(argv[i], "-r") == 0){
+    for (int i = 1; i < argc - 1; i++)
+    {
+        if (strcmp(argv[i], "-r") == 0)
+        {
             args.arg_r = 1;
             continue;
-        }else if(strcmp(argv[i], "-h") == 0){
+        }
+        else if (strcmp(argv[i], "-h") == 0)
+        {
             args.arg_h = 1;
             i++;
-            h_arg = strstr(argv[i], "md5");
+            
+            //Alocar memória para o h_arg e copiar para lá o resultado 
+            //h_arg = strstr(argv[i], "md5");
+            strcpy(h_arg, argv[i]);
 
-            if(h_arg != NULL){
+            if (h_arg != NULL)
+            {
+                h_arg = strtok(h_arg, ",");
+                args.h_args[0] = malloc(sizeof(h_arg) / sizeof(char));
                 args.h_args[0] = h_arg;
-            }
-
+            } 
+            
             h_arg = strstr(argv[i], "sha1");
 
-            if(h_arg != NULL){
-                if(args.h_args[0] != NULL){
+            if (h_arg != NULL)
+            {
+                h_arg = strtok(h_arg, ",");
+                if (args.h_args[0] != NULL)
+                {
+                    args.h_args[1] = malloc(sizeof(h_arg) / sizeof(char));
                     args.h_args[1] = h_arg;
                 }
-                else{
+                else
+                {
+                    args.h_args[0] = malloc(sizeof(h_arg) / sizeof(char));
                     args.h_args[0] = h_arg;
                 }
             }
 
             h_arg = strstr(argv[i], "sha256");
 
-            if(h_arg != NULL){
-                if(args.h_args[0] != NULL){
-                    if(args.h_args[1] != NULL){
+            if (h_arg != NULL)
+            {
+                h_arg = strtok(h_arg, ",");
+                if (args.h_args[0] != NULL)
+                {
+                    if (args.h_args[1] != NULL)
+                    {
+                        args.h_args[2] = malloc(sizeof(h_arg) / sizeof(char));
                         args.h_args[2] = h_arg;
-                    }else{
+                    }
+                    else
+                    {
+
+                        args.h_args[1] = malloc(sizeof(h_arg) / sizeof(char));
                         args.h_args[1] = h_arg;
                     }
                 }
-                else {
+                else
+                {
+                    args.h_args[0] = malloc(sizeof(h_arg) / sizeof(char));
                     args.h_args[0] = h_arg;
                 }
             }
             continue;
-        }else if(strcmp(argv[i], "-o") == 0){
+        }
+        else if (strcmp(argv[i], "-o") == 0)
+        {
             args.arg_o = 1;
             i++;
             args.outfile = argv[i];
             continue;
-
-        } else if(strcmp(argv[i], "-v") == 0){
+        }
+        else if (strcmp(argv[i], "-v") == 0)
+        {
             args.arg_v = 1;
             continue;
-        }        
+        }
     }
 
-    args.f_or_dir = argv[argc-1];
+    args.f_or_dir = argv[argc - 1];
 
     printf("%d\n", args.arg_r);
     printf("%d\n", args.arg_h);
-    if(args.h_args[0] != NULL)
-    printf("%s\n", args.h_args[0]);
-    if(args.h_args[1] != NULL)
-    printf("%s\n", args.h_args[1]);
-    if(args.h_args[2] != NULL)
-    printf("%s\n", args.h_args[2]);
-    printf("%d\n", args.arg_o);
+    if (args.h_args[0] != NULL)
+        printf("%s\n", args.h_args[0]);
+    if (args.h_args[1] != NULL)
+        printf("%s\n", args.h_args[1]);
+    if (args.h_args[2] != NULL)
+        printf("%s\n", args.h_args[2]);
+    /*printf("%d\n", args.arg_o);
     printf("%s\n", args.outfile);
     printf("%d\n", args.arg_v);
-    printf("%s\n", args.f_or_dir);
+    printf("%s\n", args.f_or_dir);*/
 
     return args;
 }
