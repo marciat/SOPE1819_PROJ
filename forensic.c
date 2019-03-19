@@ -49,23 +49,35 @@ fore_args get_programs_to_execute(int argc, char *argv[])
         {
             args.arg_h = 1;
             i++;
-            
+
             char *h_arg = (char *)malloc(20);
             char *auxiliar_string;
 
             auxiliar_string = strstr(argv[i], "md5");
             strcpy(h_arg, auxiliar_string);
 
-            if (h_arg != NULL && !(h_arg[3] != ',' && h_arg[3] != '\0'))
+            if (h_arg != NULL)
             {
+                if (h_arg[3] != ',' && h_arg[3] != '\0')
+                {
+                    printf("Invalid argument!\n");
+                    exit(1);
+                }
+
                 args.h_args[0] = "md5";
             }
-            
+
             auxiliar_string = strstr(argv[i], "sha1");
             strcpy(h_arg, auxiliar_string);
 
-            if (h_arg != NULL  && !(h_arg[4] != ',' && h_arg[4] != '\0'))
+            if (h_arg != NULL)
             {
+                if (h_arg[4] != ',' && h_arg[4] != '\0')
+                {
+                    printf("Invalid argument!\n");
+                    exit(1);
+                }
+
                 if (args.h_args[0] != NULL)
                 {
                     args.h_args[1] = "sha1";
@@ -78,10 +90,15 @@ fore_args get_programs_to_execute(int argc, char *argv[])
 
             auxiliar_string = strstr(argv[i], "sha256");
             strcpy(h_arg, auxiliar_string);
-            
-            if (h_arg != NULL  && !(h_arg[6] != ',' && h_arg[6] != '\0'))
+
+            if (h_arg != NULL)
             {
-                
+                if (h_arg[6] != ',' && h_arg[6] != '\0')
+                {
+                    printf("Invalid argument!\n");
+                    exit(1);
+                }
+
                 if (args.h_args[0] != NULL)
                 {
                     if (args.h_args[1] != NULL)
@@ -98,7 +115,7 @@ fore_args get_programs_to_execute(int argc, char *argv[])
                     args.h_args[0] = "sha256";
                 }
             }
-            
+
             free(h_arg);
 
             continue;
@@ -127,10 +144,10 @@ fore_args get_programs_to_execute(int argc, char *argv[])
         printf("%s\n", args.h_args[1]);
     if (args.h_args[2] != NULL)
         printf("%s\n", args.h_args[2]);
-    printf("%d\n", args.arg_o);
+    /*printf("%d\n", args.arg_o);
     printf("%s\n", args.outfile);
     printf("%d\n", args.arg_v);
-    printf("%s\n", args.f_or_dir);
+    printf("%s\n", args.f_or_dir);*/
 
     return args;
 }
