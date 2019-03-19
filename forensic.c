@@ -37,10 +37,6 @@ int main(int argc, char *argv[], char *envp[])
 fore_args get_programs_to_execute(int argc, char *argv[])
 {
     fore_args args;
-    char *h_arg = (char*)malloc(20*sizeof(char));
-    args.h_args[0] = NULL;
-    args.h_args[1] = NULL;
-    args.h_args[2] = NULL;
 
     for (int i = 1; i < argc - 1; i++)
     {
@@ -54,59 +50,57 @@ fore_args get_programs_to_execute(int argc, char *argv[])
             args.arg_h = 1;
             i++;
             
-            //Alocar memória para o h_arg e copiar para lá o resultado 
-            //h_arg = strstr(argv[i], "md5");
-            strcpy(h_arg, argv[i]);
+            char *h_arg = (char *)malloc(20);
+            char *auxiliar_string;
 
-            if (h_arg != NULL)
+            auxiliar_string = strstr(argv[i], "md5");
+            strcpy(h_arg, auxiliar_string);
+
+            if (h_arg != NULL && !(h_arg[3] != ',' && h_arg[3] != '\0'))
             {
-                h_arg = strtok(h_arg, ",");
-                args.h_args[0] = malloc(sizeof(h_arg) / sizeof(char));
-                args.h_args[0] = h_arg;
-            } 
+                args.h_args[0] = "md5";
+            }
             
-            h_arg = strstr(argv[i], "sha1");
+            auxiliar_string = strstr(argv[i], "sha1");
+            strcpy(h_arg, auxiliar_string);
 
-            if (h_arg != NULL)
+            if (h_arg != NULL  && !(h_arg[4] != ',' && h_arg[4] != '\0'))
             {
-                h_arg = strtok(h_arg, ",");
                 if (args.h_args[0] != NULL)
                 {
-                    args.h_args[1] = malloc(sizeof(h_arg) / sizeof(char));
-                    args.h_args[1] = h_arg;
+                    args.h_args[1] = "sha1";
                 }
                 else
                 {
-                    args.h_args[0] = malloc(sizeof(h_arg) / sizeof(char));
-                    args.h_args[0] = h_arg;
+                    args.h_args[0] = "sha1";
                 }
             }
 
-            h_arg = strstr(argv[i], "sha256");
-
-            if (h_arg != NULL)
+            auxiliar_string = strstr(argv[i], "sha256");
+            strcpy(h_arg, auxiliar_string);
+            
+            if (h_arg != NULL  && !(h_arg[6] != ',' && h_arg[6] != '\0'))
             {
-                h_arg = strtok(h_arg, ",");
+                
                 if (args.h_args[0] != NULL)
                 {
                     if (args.h_args[1] != NULL)
                     {
-                        args.h_args[2] = malloc(sizeof(h_arg) / sizeof(char));
-                        args.h_args[2] = h_arg;
+                        args.h_args[2] = "sha256";
                     }
                     else
                     {
-
-                        args.h_args[1] = malloc(sizeof(h_arg) / sizeof(char));
-                        args.h_args[1] = h_arg;
+                        args.h_args[1] = "sha256";
                     }
                 }
                 else
                 {
-                    args.h_args[0] = malloc(sizeof(h_arg) / sizeof(char));
-                    args.h_args[0] = h_arg;
+                    args.h_args[0] = "sha256";
                 }
             }
+            
+            free(h_arg);
+
             continue;
         }
         else if (strcmp(argv[i], "-o") == 0)
@@ -133,10 +127,10 @@ fore_args get_programs_to_execute(int argc, char *argv[])
         printf("%s\n", args.h_args[1]);
     if (args.h_args[2] != NULL)
         printf("%s\n", args.h_args[2]);
-    /*printf("%d\n", args.arg_o);
+    printf("%d\n", args.arg_o);
     printf("%s\n", args.outfile);
     printf("%d\n", args.arg_v);
-    printf("%s\n", args.f_or_dir);*/
+    printf("%s\n", args.f_or_dir);
 
     return args;
 }
