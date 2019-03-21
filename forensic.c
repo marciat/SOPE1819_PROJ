@@ -37,6 +37,15 @@ int main(int argc, char *argv[], char *envp[])
 fore_args get_programs_to_execute(int argc, char *argv[])
 {
     fore_args args;
+    args.arg_r = false;
+    args.arg_h = false;
+    for(int i = 0; i < 3; i++){
+        args.h_args[i] = NULL;
+    }
+    args.arg_o = false;
+    args.outfile = NULL;
+    args.arg_v = false;
+    args.f_or_dir = NULL;
 
     for (int i = 1; i < argc - 1; i++)
     {
@@ -136,7 +145,7 @@ fore_args get_programs_to_execute(int argc, char *argv[])
 
     args.f_or_dir = argv[argc - 1];
 
-    printf("%d\n", args.arg_r);
+    /*printf("%d\n", args.arg_r);
     printf("%d\n", args.arg_h);
     if (args.h_args[0] != NULL)
         printf("%s\n", args.h_args[0]);
@@ -144,7 +153,7 @@ fore_args get_programs_to_execute(int argc, char *argv[])
         printf("%s\n", args.h_args[1]);
     if (args.h_args[2] != NULL)
         printf("%s\n", args.h_args[2]);
-    /*printf("%d\n", args.arg_o);
+    printf("%d\n", args.arg_o);
     printf("%s\n", args.outfile);
     printf("%d\n", args.arg_v);
     printf("%s\n", args.f_or_dir);*/
