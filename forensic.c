@@ -43,7 +43,7 @@ int main(int argc, char *argv[], char *envp[])
 
     file_string[strcspn(file_string, "\n")] = '\0';
 
-    //Read File Data
+    //Read File Data and Modification Time
     fd1 = open("temp_file.txt", O_RDWR, 0777);
     fp = fdopen(fd1, "r");
     char *lsl_string = malloc(255 * sizeof(char));
@@ -79,10 +79,37 @@ int main(int argc, char *argv[], char *envp[])
         file_modification_date[i] = lsl_string[i];
     }
 
+    //free(lsl_string);
     fclose(fp);
     close(fd1);
 
-    printf("%s,%s,%d,%s,%s", args.f_or_dir, file_string, file_size, file_access_owner, file_modification_date);
+    //Read Access Time
+    fd1 = open("temp_file.txt", O_RDWR, 0777);
+    fp = fdopen(fd1, "r");
+    lsl_string = malloc(255 * sizeof(char));
+    sprintf(lsl_string, "ls -l --time=atime %s > temp_file.txt", args.f_or_dir);
+    system(lsl_string);
+    free(lsl_string);
+    lsl_string = malloc(255 * sizeof(char));
+    fgets(lsl_string, 255, fp); //Get ls -l string from file
+    lsl_string = strstr(lsl_string, " ") + 1;
+    lsl_string = strstr(lsl_string, " ") + 1;
+    lsl_string = strstr(lsl_string, " ") + 1;
+    lsl_string = strstr(lsl_string, " ") + 1;
+    lsl_string = strstr(lsl_string, " ") + 1;
+
+    char *file_access_date = malloc(12 * sizeof(char));
+    for (unsigned i = 0; i < 12; i++)
+    {
+        file_access_date[i] = lsl_string[i];
+    }
+
+    //free(lsl_string);
+    fclose(fp);
+    close(fd1);
+
+
+    printf("%s,%s,%d,%s,%s,%s", args.f_or_dir, file_string, file_size, file_access_owner, file_access_date, file_modification_date);
 
     //Calculate file fingerprints
     if (args.arg_h)
