@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <time.h>
 
 #include "forensic.h"
 
@@ -42,48 +43,64 @@ int main(int argc, char *argv[], char *envp[])
     close(fd1);
 
     file_string[strcspn(file_string, "\n")] = '\0';
-
     //Read File Data
-    fd1 = open("temp_file.txt", O_RDWR, 0777);
-    fp = fdopen(fd1, "r");
-    char *lsl_string = malloc(255 * sizeof(char));
-    sprintf(lsl_string, "ls -l %s > temp_file.txt", args.f_or_dir);
-    system(lsl_string);
-    free(lsl_string);
-    lsl_string = malloc(255 * sizeof(char));
-    fgets(lsl_string, 255, fp); //Get ls -l string from file
+    char *path_string = malloc(255 * sizeof(char));
+    struct stat statbuf;
+    sprintf(path_string, "%s", args.f_or_dir);
+    if(stat(path_string, &statbuf) < 0){
+        exit(1);
+    }
+    free(path_string);
 
     char *file_access_owner = malloc(3 * sizeof(char));
-
-    for (unsigned i = 0, j = 0; i < 3; i++, j++)
-    {
-        if (lsl_string[i] == '-')
-        {
-            j--;
-            continue;
-        }
-        file_access_owner[j] = lsl_string[i];
-    }
-    lsl_string = strstr(lsl_string, " ") + 1;
-    lsl_string = strstr(lsl_string, " ") + 1;
-    lsl_string = strstr(lsl_string, " ") + 1;
-    lsl_string = strstr(lsl_string, " ") + 1;
-
+    time_t file_modification_date;
+    time_t file_access_date;
     int file_size = 0;
-    sscanf(lsl_string, "%d", &file_size);
-    lsl_string = strstr(lsl_string, " ") + 1;
-
-    char *file_modification_date = malloc(12 * sizeof(char));
-    for (unsigned i = 0; i < 12; i++)
-    {
-        file_modification_date[i] = lsl_string[i];
+    for(unsigned int i = 0; i < 3; i++){
+        file_access_owner[i] = '\0';
     }
+                                 
+    file_size = statbuf.st_size;
+
+    if(statbuf.st_mode & S_IRUSR){
+        file_access_owner[0] = 'r';
+    }
+
+    if(statbuf.st_mode & S_IWUSR){
+        if(file_access_owner[0] == '\0'){
+            file_access_owner[0] == 'w';
+        }else{
+            file_access_owner[1] = 'w';
+        }
+    }
+
+    if(statbuf.st_mode & S_IXUSR){
+        if(file_access_owner[0] == '\0'){
+            file_access_owner[0] == 'x';
+        }else if(file_access_owner[1] == '\0'){
+            file_access_owner[1] = 'x';
+        }else{
+            file_access_owner[2] = 'x';
+        }
+    }
+
+    file_access_date = statbuf.st_atime;
+    file_modification_date = statbuf.st_mtime;
+
+    struct tm* access_info;
+    struct tm* modification_info;
+    char accessDate[20];
+    char modificationDate[20];
+    access_info = localtime(&file_access_date);
+    modification_info = localtime(&file_modification_date);
+
+    strftime(accessDate, 20,"%Y-%m-%dT%H:%M:%S", access_info);
+    strftime(modificationDate, 20,"%Y-%m-%dT%H:%M:%S", modification_info);
+
+    printf("%s,%s,%d,%s,%s,%s", args.f_or_dir, file_string, file_size, file_access_owner, accessDate, modificationDate);
 
     fclose(fp);
     close(fd1);
-
-    printf("%s,%s,%d,%s,%s", args.f_or_dir, file_string, file_size, file_access_owner, file_modification_date);
-
     //Calculate file fingerprints
     if (args.arg_h)
     {
