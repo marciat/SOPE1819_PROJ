@@ -11,6 +11,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <time.h>
+#include <dirent.h>
 
 #include "forensic.h"
 
@@ -36,6 +37,22 @@ int main(int argc, char *argv[], char *envp[])
             perror("-h flag requires arguments!!!\n");
             exit(1);
         }
+    }
+
+    if(strstr(args.f_or_dir, ".") != NULL){ //Found file
+        //Call program to read file data
+    }
+    else{ //Found directory
+        DIR *dir;
+        struct dirent *ent;
+        if((dir = opendir(args.f_or_dir)) != NULL){
+            while((ent = readdir(dir)) != NULL){
+                printf("%s\n", ent->d_name);
+            }
+            closedir(dir);
+        }
+
+        exit(0);
     }
 
     //Read File Type
@@ -134,6 +151,9 @@ int main(int argc, char *argv[], char *envp[])
         }
     }
     printf("\n");
+
+    system("rm temp_file.txt");
+
     return 0;
 }
 
