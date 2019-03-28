@@ -64,30 +64,29 @@ int main(int argc, char *argv[], char *envp[])
 
     //Read File Type
     int fd1 = open("temp_file.txt", O_RDWR | O_CREAT, 0777);
-    if(fd1 < 0){
+    if (fd1 < 0)
+    {
         perror("open");
         exit(-1);
     }
-    
+
     FILE *fp = fdopen(fd1, "r");
-    if(fp == NULL){
+    if (fp == NULL)
+    {
         perror("fdopen");
         exit(-1);
     }
 
     char *file_string = malloc(255 * sizeof(char));
     sprintf(file_string, "file %s > temp_file.txt", args.f_or_dir);
-    printf("1\n");
     system(file_string);
-    printf("2\n");
     memset(file_string, '\0', sizeof(file_string) * sizeof(char));
-    printf("3\n");
     fgets(file_string, 255, fp);
-    printf("4\n");
-    char *file_string_result = strstr(file_string, " ") + 1;
     fclose(fp);
     close(fd1);
-    printf("5\n");
+    
+    char *file_string_result = strstr(file_string, " ") + 1;
+
     size_t file_string_len = strlen(file_string_result);
     file_string_result[file_string_len - 1] = '\0';
 
@@ -257,7 +256,7 @@ fore_args get_programs_to_execute(int argc, char *argv[], char *envp[])
             auxiliar_string = strstr(argv[i], "sha1");
             if (auxiliar_string != NULL)
             {
-                strcpy(h_arg, auxiliar_string);
+                h_arg = strcpy(h_arg, auxiliar_string);
             }
             else
             {
@@ -285,7 +284,8 @@ fore_args get_programs_to_execute(int argc, char *argv[], char *envp[])
             auxiliar_string = strstr(argv[i], "sha256");
             if (auxiliar_string != NULL)
             {
-                strcpy(h_arg, auxiliar_string);
+                write(STDOUT_FILENO, "OLA\n", 5);
+                h_arg = strcpy(h_arg, auxiliar_string);
             }
             else
             {
