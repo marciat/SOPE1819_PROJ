@@ -15,7 +15,7 @@
 #include "forensic.h"
 
 int main(int argc, char *argv[], char *envp[])
-{
+{ 
     if (argc < 2)
     {
         printf("Error: program needs at least 1 parameter...\n");
@@ -173,7 +173,12 @@ fore_args get_programs_to_execute(int argc, char *argv[], char *envp[])
             }
 
             auxiliar_string = strstr(argv[i], "sha1");
-            strcpy(h_arg, auxiliar_string);
+            if(auxiliar_string != NULL){
+                strcpy(h_arg, auxiliar_string);
+            }
+            else{
+                h_arg = NULL;
+            }
 
             if (h_arg != NULL)
             {
@@ -194,7 +199,12 @@ fore_args get_programs_to_execute(int argc, char *argv[], char *envp[])
             }
 
             auxiliar_string = strstr(argv[i], "sha256");
-            strcpy(h_arg, auxiliar_string);
+            if(auxiliar_string != NULL){
+                strcpy(h_arg, auxiliar_string);
+            }
+            else{
+                h_arg = NULL;
+            }
 
             if (h_arg != NULL)
             {
@@ -220,7 +230,7 @@ fore_args get_programs_to_execute(int argc, char *argv[], char *envp[])
                     args.h_args[0] = "sha256";
                 }
             }
-
+            
             free(h_arg);
 
             continue;
