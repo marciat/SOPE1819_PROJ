@@ -72,6 +72,7 @@ int main(int argc, char *argv[], char *envp[])
     close(fd1);
 
     file_string[strcspn(file_string, "\n")] = '\0';
+    
     //Read File Data
     char *path_string = malloc(255 * sizeof(char));
     struct stat statbuf;
@@ -81,7 +82,7 @@ int main(int argc, char *argv[], char *envp[])
     }
     free(path_string);
 
-    char *file_access_owner = malloc(3 * sizeof(char));
+    char file_access_owner[3];
     time_t file_modification_date;
     time_t file_access_date;
     int file_size = 0;
@@ -113,6 +114,8 @@ int main(int argc, char *argv[], char *envp[])
         }
     }
 
+
+
     file_access_date = statbuf.st_atime;
     file_modification_date = statbuf.st_mtime;
 
@@ -126,7 +129,9 @@ int main(int argc, char *argv[], char *envp[])
     strftime(accessDate, 20,"%Y-%m-%dT%H:%M:%S", access_info);
     strftime(modificationDate, 20,"%Y-%m-%dT%H:%M:%S", modification_info);
 
-    printf("%s,%s,%d,%s,%s,%s", args.f_or_dir, file_string, file_size, file_access_owner, accessDate, modificationDate);
+    char info_to_write[100];
+
+    sprintf(info_to_write, "%s,%s,%d,%s,%s,%s", args.f_or_dir, file_string, file_size, file_access_owner, accessDate, modificationDate);
 
     fclose(fp);
     close(fd1);
@@ -145,7 +150,7 @@ int main(int argc, char *argv[], char *envp[])
                 h_string = malloc(255 * sizeof(char));
                 fgets(h_string, 255, fp);
                 sscanf(h_string, "%s %s", h_string, tmp_string);
-                printf(",%s", h_string);
+                sprintf(info_to_write + strlen(info_to_write), ",%s", h_string);
                 free(h_string);
                 free(tmp_string);
                 fclose(fp);
@@ -153,9 +158,17 @@ int main(int argc, char *argv[], char *envp[])
             }
         }
     }
-    printf("\n");
+
+    sprintf(info_to_write + strlen(info_to_write), "\n");
+
+    if(args.arg_o){
+        int fd_o = open(args.outfile, O_RDWR, 0777);
+        write(fd_o, info_to_write, strlen(info_to_write));
+    }
+    else
+        write(STDOUT_FILENO, info_to_write, strlen(info_to_write));
     
-    system("rm temp_file.txt");
+        system("rm temp_file.txt");
 
     return 0;
 }
