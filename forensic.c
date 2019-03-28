@@ -77,9 +77,10 @@ int main(int argc, char *argv[], char *envp[])
     fgets(file_string, 255, fp);
 
     file_string = strstr(file_string, " ") + 1;
+ 
     fclose(fp);
     close(fd1);
-
+ 
     size_t file_string_len = strlen(file_string);
     file_string[file_string_len-1] = '\0';
 
@@ -249,7 +250,7 @@ fore_args get_programs_to_execute(int argc, char *argv[], char *envp[])
             auxiliar_string = strstr(argv[i], "sha1");
             if (auxiliar_string != NULL)
             {
-                strcpy(h_arg, auxiliar_string);
+                h_arg = strcpy(h_arg, auxiliar_string);
             }
             else
             {
@@ -277,7 +278,8 @@ fore_args get_programs_to_execute(int argc, char *argv[], char *envp[])
             auxiliar_string = strstr(argv[i], "sha256");
             if (auxiliar_string != NULL)
             {
-                strcpy(h_arg, auxiliar_string);
+                write(STDOUT_FILENO, "OLA\n", 5);
+                h_arg = strcpy(h_arg, auxiliar_string);
             }
             else
             {
