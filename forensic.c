@@ -66,11 +66,12 @@ int main(int argc, char *argv[], char *envp[])
     //Read File Type
     int fd1 = open("temp_file.txt", O_RDWR, 0777);
     FILE *fp = fdopen(fd1, "r");
-    char *file_string = malloc(255 * sizeof(char));
+    char *file_string;
+    do{ 
+        file_string = malloc(255 * sizeof(char));        
+    }while(file_string == NULL);
     sprintf(file_string, "file %s > temp_file.txt", args.f_or_dir);
     system(file_string);
-    free(file_string);
-    file_string = malloc(255 * sizeof(char));
     fgets(file_string, 255, fp);
     printf("%s\n",file_string);
     file_string = strstr(file_string, " ") + 1;
@@ -150,6 +151,7 @@ int main(int argc, char *argv[], char *envp[])
 
     sprintf(info_to_write, "%s,%s,%d,%s,%s,%s", args.f_or_dir, file_string, file_size, file_access_owner, accessDate, modificationDate);
 
+    free(file_string);
     fclose(fp);
     close(fd1);
     //Calculate file fingerprints
