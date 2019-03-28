@@ -168,7 +168,8 @@ int main(int argc, char *argv[], char *envp[])
         {
             if (args.h_args[i] != NULL)
             {
-                fd1 = open("temp_file.txt", O_RDWR, 0777);
+                fd1 = open("temp_file.txt", O_RDWR
+                    , 0777);
                 fp = fdopen(fd1, "r");
                 char *h_string = malloc(255 * sizeof(char));
                 char *tmp_string = malloc(25 * sizeof(char));
@@ -190,7 +191,7 @@ int main(int argc, char *argv[], char *envp[])
 
     if (args.arg_o)
     {
-        int fd_o = open(args.outfile, O_RDWR, 0777);
+        int fd_o = open(args.outfile, O_RDWR | O_CREAT, 0777);
         write(fd_o, info_to_write, strlen(info_to_write));
     }
     else

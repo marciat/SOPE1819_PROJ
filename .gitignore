@@ -10,7 +10,7 @@
 # Unignore Makefile
 !Makefile
 
-# Ignore temporary files and other unuseful files for project
+# Ignore temporary files and other useless files for project
 *.o
 .vscode/*
-temp_file.txt
+*.txt
