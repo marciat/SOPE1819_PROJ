@@ -27,6 +27,7 @@ int main(int argc, char *argv[], char *envp[])
         char *h_string = malloc(255 * sizeof(char));
         sprintf(h_string, "Error: program can't take %d parameters...\n", argc);
         perror(h_string);
+        free(h_string);
         return 1;
     }
 
@@ -38,11 +39,9 @@ int main(int argc, char *argv[], char *envp[])
             exit(1);
         }
     }
-
-    if(strstr(args.f_or_dir, ".") != NULL){ //Found file
-        //Call program to read file data
-    }
-    else{ //Found directory
+    
+    struct stat directory_stat;
+    if((stat(args.f_or_dir, &directory_stat) >= 0) && S_ISDIR(directory_stat.st_mode)){//Found directory
         DIR *dir;
         struct dirent *ent;
         if((dir = opendir(args.f_or_dir)) != NULL){
@@ -53,6 +52,9 @@ int main(int argc, char *argv[], char *envp[])
         }
 
         exit(0);
+    }
+    else{  //Found file
+        //Call program to read file data
     }
 
     //Read File Type
@@ -69,6 +71,7 @@ int main(int argc, char *argv[], char *envp[])
     close(fd1);
 
     file_string[strcspn(file_string, "\n")] = '\0';
+    
     //Read File Data
     char *path_string = malloc(255 * sizeof(char));
     struct stat statbuf;
@@ -78,7 +81,7 @@ int main(int argc, char *argv[], char *envp[])
     }
     free(path_string);
 
-    char *file_access_owner = malloc(3 * sizeof(char));
+    char file_access_owner[3];
     time_t file_modification_date;
     time_t file_access_date;
     int file_size = 0;
@@ -124,7 +127,7 @@ int main(int argc, char *argv[], char *envp[])
     strftime(modificationDate, 20,"%Y-%m-%dT%H:%M:%S", modification_info);
 
     printf("%s,%s,%d,%s,%s,%s", args.f_or_dir, file_string, file_size, file_access_owner, accessDate, modificationDate);
-
+    
     fclose(fp);
     close(fd1);
     //Calculate file fingerprints
