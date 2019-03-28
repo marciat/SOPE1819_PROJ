@@ -31,7 +31,7 @@ int main(int argc, char *argv[], char *envp[])
         return 1;
     }
 
-    fore_args args = get_programs_to_execute(argc, argv, envp);    
+    fore_args args = get_programs_to_execute(argc, argv, envp);
 
     if (args.arg_h)
     {
@@ -69,15 +69,16 @@ int main(int argc, char *argv[], char *envp[])
     char *file_string = malloc(255 * sizeof(char));
     sprintf(file_string, "file %s > temp_file.txt", args.f_or_dir);
     system(file_string);
-    free(file_string);
-    file_string = malloc(255 * sizeof(char));
+    memset(file_string, '\0',sizeof(file_string)*sizeof(char));
+
     fgets(file_string, 255, fp);
-    printf("%s\n",file_string);
+
     file_string = strstr(file_string, " ") + 1;
     fclose(fp);
     close(fd1);
 
-    file_string[strcspn(file_string, "\n")] = '\0';
+    size_t file_string_len = strlen(file_string);
+    file_string[file_string_len-1] = '\0';
 
     //Read File Data
     char *path_string = malloc(255 * sizeof(char));
@@ -146,12 +147,10 @@ int main(int argc, char *argv[], char *envp[])
     strftime(accessDate, 20, "%Y-%m-%dT%H:%M:%S", access_info);
     strftime(modificationDate, 20, "%Y-%m-%dT%H:%M:%S", modification_info);
 
-    char info_to_write[100];
+    char* info_to_write = malloc(1000*sizeof(char));
 
     sprintf(info_to_write, "%s,%s,%d,%s,%s,%s", args.f_or_dir, file_string, file_size, file_access_owner, accessDate, modificationDate);
 
-    fclose(fp);
-    close(fd1);
     //Calculate file fingerprints
     if (args.arg_h)
     {
@@ -188,6 +187,7 @@ int main(int argc, char *argv[], char *envp[])
         write(STDOUT_FILENO, info_to_write, strlen(info_to_write));
 
     system("rm temp_file.txt");
+    free(info_to_write);
 
     return 0;
 }
