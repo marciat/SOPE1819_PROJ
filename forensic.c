@@ -30,7 +30,7 @@ int main(int argc, char *argv[], char *envp[])
         return 1;
     }
 
-    char* file_or_dir = argv[argc-1];
+    char *file_or_dir = argv[argc - 1];
 
     struct stat directory_stat;
     if ((stat(file_or_dir, &directory_stat) >= 0) && S_ISDIR(directory_stat.st_mode))
@@ -41,7 +41,18 @@ int main(int argc, char *argv[], char *envp[])
         {
             while ((ent = readdir(dir)) != NULL)
             {
-                printf("%s\n", ent->d_name);
+                if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0)
+                    continue;
+
+                if ((stat(ent->d_name, &directory_stat) >= 0) && S_ISDIR(directory_stat.st_mode))
+                {
+                    printf("%s\n", ent->d_name);
+                }
+                else
+                { //File in directory
+                    strcpy(argv[argc-1], ent->d_name);
+                    execvp("forensic", argv);
+                }
             }
             closedir(dir);
         }
@@ -51,10 +62,7 @@ int main(int argc, char *argv[], char *envp[])
     else
     { //Found file
         execvp("process_data", argv);
-        //Call program to read file data
     }
 
-    
     return 0;
 }
-
