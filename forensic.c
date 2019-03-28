@@ -11,6 +11,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <time.h>
+#include <dirent.h>
 
 #include "forensic.h"
 
@@ -18,16 +19,41 @@ int main(int argc, char *argv[], char *envp[])
 { 
     if (argc < 2)
     {
-        printf("Error: program needs at least 1 parameter...\n");
+        perror("Error: program needs at least 1 parameter...\n");
         return 1;
     }
     else if (argc > 8)
     {
-        printf("Error: program can't take %d parameters...\n", argc);
+        char *h_string = malloc(255 * sizeof(char));
+        sprintf(h_string, "Error: program can't take %d parameters...\n", argc);
+        perror(h_string);
         return 1;
     }
 
     fore_args args = get_programs_to_execute(argc, argv, envp);
+
+    if(args.arg_h){
+        if(args.h_args[0] == NULL){
+            perror("-h flag requires arguments!!!\n");
+            exit(1);
+        }
+    }
+
+    if(strstr(args.f_or_dir, ".") != NULL){ //Found file
+        //Call program to read file data
+    }
+    else{ //Found directory
+        DIR *dir;
+        struct dirent *ent;
+        if((dir = opendir(args.f_or_dir)) != NULL){
+            while((ent = readdir(dir)) != NULL){
+                printf("%s\n", ent->d_name);
+            }
+            closedir(dir);
+        }
+
+        exit(0);
+    }
 
     //Read File Type
     int fd1 = open("temp_file.txt", O_RDWR, 0777);
@@ -108,24 +134,24 @@ int main(int argc, char *argv[], char *envp[])
     //Calculate file fingerprints
     if (args.arg_h)
     {
-        unsigned i = 0;
-        while (args.h_args[i] != NULL || i < 3)
+        for(unsigned int i = 0; i < 3; i++)
         {
-            fd1 = open("temp_file.txt", O_RDWR, 0777);
-            fp = fdopen(fd1, "r");
-            char *h_string = malloc(255 * sizeof(char));
-            char* tmp_string = malloc(25*sizeof(char));
-            sprintf(h_string, "%ssum %s > temp_file.txt", args.h_args[i], args.f_or_dir);
-            system(h_string);
-            h_string = malloc(255 * sizeof(char));
-            fgets(h_string, 255, fp);
-            sscanf(h_string, "%s %s", h_string, tmp_string);
-            sprintf(info_to_write + strlen(info_to_write), ",%s", h_string);
-            free(h_string);
-            free(tmp_string);
-            fclose(fp);
-            close(fd1);
-            i++;
+            if(args.h_args[i] != NULL){
+                fd1 = open("temp_file.txt", O_RDWR, 0777);
+                fp = fdopen(fd1, "r");
+                char *h_string = malloc(255 * sizeof(char));
+                char* tmp_string = malloc(25*sizeof(char));
+                sprintf(h_string, "%ssum %s > temp_file.txt", args.h_args[i], args.f_or_dir);
+                system(h_string);
+                h_string = malloc(255 * sizeof(char));
+                fgets(h_string, 255, fp);
+                sscanf(h_string, "%s %s", h_string, tmp_string);
+                sprintf(info_to_write + strlen(info_to_write), ",%s", h_string);
+                free(h_string);
+                free(tmp_string);
+                fclose(fp);
+                close(fd1);
+            }
         }
     }
 
@@ -137,7 +163,8 @@ int main(int argc, char *argv[], char *envp[])
     }
     else
         write(STDOUT_FILENO, info_to_write, strlen(info_to_write));
-    //free(info_to_write);
+    
+        system("rm temp_file.txt");
 
     return 0;
 }
@@ -173,7 +200,12 @@ fore_args get_programs_to_execute(int argc, char *argv[], char *envp[])
             char *auxiliar_string;
 
             auxiliar_string = strstr(argv[i], "md5");
-            strcpy(h_arg, auxiliar_string);
+            if(auxiliar_string != NULL){
+                strcpy(h_arg, auxiliar_string);
+            }
+            else{
+                h_arg = NULL;
+            }
 
             if (h_arg != NULL)
             {
@@ -244,7 +276,7 @@ fore_args get_programs_to_execute(int argc, char *argv[], char *envp[])
                     args.h_args[0] = "sha256";
                 }
             }
-            
+
             free(h_arg);
 
             continue;
