@@ -27,10 +27,11 @@ int main(int argc, char *argv[], char *envp[])
         char *h_string = malloc(255 * sizeof(char));
         sprintf(h_string, "Error: program can't take %d parameters...\n", argc);
         perror(h_string);
+        free(h_string);
         return 1;
     }
 
-    fore_args args = get_programs_to_execute(argc, argv, envp);
+    fore_args args = get_programs_to_execute(argc, argv, envp);    
 
     if(args.arg_h){
         if(args.h_args[0] == NULL){
@@ -38,7 +39,7 @@ int main(int argc, char *argv[], char *envp[])
             exit(1);
         }
     }
-
+/*
     if(strstr(args.f_or_dir, ".") != NULL){ //Found file
         //Call program to read file data
     }
@@ -53,7 +54,8 @@ int main(int argc, char *argv[], char *envp[])
         }
 
         exit(0);
-    }
+    }*/
+
 
     //Read File Type
     int fd1 = open("temp_file.txt", O_RDWR, 0777);
@@ -64,6 +66,7 @@ int main(int argc, char *argv[], char *envp[])
     free(file_string);
     file_string = malloc(255 * sizeof(char));
     fgets(file_string, 255, fp);
+    printf("%s\n",file_string);
     file_string = strstr(file_string, " ") + 1;
     fclose(fp);
     close(fd1);
@@ -151,7 +154,7 @@ int main(int argc, char *argv[], char *envp[])
         }
     }
     printf("\n");
-
+    
     system("rm temp_file.txt");
 
     return 0;
