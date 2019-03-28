@@ -17,17 +17,16 @@
 
 int main(int argc, char *argv[], char *envp[])
 {
+    setbuf(stdout, NULL);
+
     if (argc < 2)
     {
-        perror("Error: program needs at least 1 parameter...\n");
+        printf("Error: program needs at least 1 parameter...\n");
         return 1;
     }
     else if (argc > 8)
     {
-        char *h_string = malloc(255 * sizeof(char));
-        sprintf(h_string, "Error: program can't take %d parameters...\n", argc);
-        perror(h_string);
-        free(h_string);
+        printf("Error: program can't take %d parameters...\n", argc);
         return 1;
     }
 
@@ -64,21 +63,33 @@ int main(int argc, char *argv[], char *envp[])
     }
 
     //Read File Type
-    int fd1 = open("temp_file.txt", O_RDWR, 0777);
+    int fd1 = open("temp_file.txt", O_RDWR | O_CREAT, 0777);
+    if(fd1 < 0){
+        perror("open");
+        exit(-1);
+    }
+    
     FILE *fp = fdopen(fd1, "r");
+    if(fp == NULL){
+        perror("fdopen");
+        exit(-1);
+    }
+
     char *file_string = malloc(255 * sizeof(char));
     sprintf(file_string, "file %s > temp_file.txt", args.f_or_dir);
+    printf("1\n");
     system(file_string);
-    memset(file_string, '\0',sizeof(file_string)*sizeof(char));
-
+    printf("2\n");
+    memset(file_string, '\0', sizeof(file_string) * sizeof(char));
+    printf("3\n");
     fgets(file_string, 255, fp);
-
-    file_string = strstr(file_string, " ") + 1;
+    printf("4\n");
+    char *file_string_result = strstr(file_string, " ") + 1;
     fclose(fp);
     close(fd1);
-
-    size_t file_string_len = strlen(file_string);
-    file_string[file_string_len-1] = '\0';
+    printf("5\n");
+    size_t file_string_len = strlen(file_string_result);
+    file_string_result[file_string_len - 1] = '\0';
 
     //Read File Data
     char *path_string = malloc(255 * sizeof(char));
@@ -110,7 +121,7 @@ int main(int argc, char *argv[], char *envp[])
     {
         if (file_access_owner[0] == '\0')
         {
-            file_access_owner[0] == 'w';
+            file_access_owner[0] = 'w';
         }
         else
         {
@@ -122,7 +133,7 @@ int main(int argc, char *argv[], char *envp[])
     {
         if (file_access_owner[0] == '\0')
         {
-            file_access_owner[0] == 'x';
+            file_access_owner[0] = 'x';
         }
         else if (file_access_owner[1] == '\0')
         {
@@ -147,10 +158,10 @@ int main(int argc, char *argv[], char *envp[])
     strftime(accessDate, 20, "%Y-%m-%dT%H:%M:%S", access_info);
     strftime(modificationDate, 20, "%Y-%m-%dT%H:%M:%S", modification_info);
 
-    char* info_to_write = malloc(1000*sizeof(char));
+    char *info_to_write = malloc(1000 * sizeof(char));
 
-    sprintf(info_to_write, "%s,%s,%d,%s,%s,%s", args.f_or_dir, file_string, file_size, file_access_owner, accessDate, modificationDate);
-
+    sprintf(info_to_write, "%s,%s,%d,%s,%s,%s", args.f_or_dir, file_string_result, file_size, file_access_owner, accessDate, modificationDate);
+    free(file_string);
     //Calculate file fingerprints
     if (args.arg_h)
     {
