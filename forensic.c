@@ -16,7 +16,7 @@
 #include "forensic.h"
 
 int main(int argc, char *argv[], char *envp[])
-{ 
+{
     if (argc < 2)
     {
         perror("Error: program needs at least 1 parameter...\n");
@@ -33,19 +33,24 @@ int main(int argc, char *argv[], char *envp[])
 
     fore_args args = get_programs_to_execute(argc, argv, envp);
 
-    if(args.arg_h){
-        if(args.h_args[0] == NULL){
+    if (args.arg_h)
+    {
+        if (args.h_args[0] == NULL)
+        {
             perror("-h flag requires arguments!!!\n");
             exit(1);
         }
     }
-    
+
     struct stat directory_stat;
-    if((stat(args.f_or_dir, &directory_stat) >= 0) && S_ISDIR(directory_stat.st_mode)){//Found directory
+    if ((stat(args.f_or_dir, &directory_stat) >= 0) && S_ISDIR(directory_stat.st_mode))
+    { //Found directory
         DIR *dir;
         struct dirent *ent;
-        if((dir = opendir(args.f_or_dir)) != NULL){
-            while((ent = readdir(dir)) != NULL){
+        if ((dir = opendir(args.f_or_dir)) != NULL)
+        {
+            while ((ent = readdir(dir)) != NULL)
+            {
                 printf("%s\n", ent->d_name);
             }
             closedir(dir);
@@ -53,7 +58,8 @@ int main(int argc, char *argv[], char *envp[])
 
         exit(0);
     }
-    else{  //Found file
+    else
+    { //Found file
         //Call program to read file data
     }
 
@@ -71,12 +77,13 @@ int main(int argc, char *argv[], char *envp[])
     close(fd1);
 
     file_string[strcspn(file_string, "\n")] = '\0';
-    
+
     //Read File Data
     char *path_string = malloc(255 * sizeof(char));
     struct stat statbuf;
     sprintf(path_string, "%s", args.f_or_dir);
-    if(stat(path_string, &statbuf) < 0){
+    if (stat(path_string, &statbuf) < 0)
+    {
         exit(1);
     }
     free(path_string);
@@ -85,48 +92,58 @@ int main(int argc, char *argv[], char *envp[])
     time_t file_modification_date;
     time_t file_access_date;
     int file_size = 0;
-    for(unsigned int i = 0; i < 3; i++){
+    for (unsigned int i = 0; i < 3; i++)
+    {
         file_access_owner[i] = '\0';
     }
-                                 
+
     file_size = statbuf.st_size;
 
-    if(statbuf.st_mode & S_IRUSR){
+    if (statbuf.st_mode & S_IRUSR)
+    {
         file_access_owner[0] = 'r';
     }
 
-    if(statbuf.st_mode & S_IWUSR){
-        if(file_access_owner[0] == '\0'){
+    if (statbuf.st_mode & S_IWUSR)
+    {
+        if (file_access_owner[0] == '\0')
+        {
             file_access_owner[0] == 'w';
-        }else{
+        }
+        else
+        {
             file_access_owner[1] = 'w';
         }
     }
 
-    if(statbuf.st_mode & S_IXUSR){
-        if(file_access_owner[0] == '\0'){
+    if (statbuf.st_mode & S_IXUSR)
+    {
+        if (file_access_owner[0] == '\0')
+        {
             file_access_owner[0] == 'x';
-        }else if(file_access_owner[1] == '\0'){
+        }
+        else if (file_access_owner[1] == '\0')
+        {
             file_access_owner[1] = 'x';
-        }else{
+        }
+        else
+        {
             file_access_owner[2] = 'x';
         }
     }
 
-
-
     file_access_date = statbuf.st_atime;
     file_modification_date = statbuf.st_mtime;
 
-    struct tm* access_info;
-    struct tm* modification_info;
+    struct tm *access_info;
+    struct tm *modification_info;
     char accessDate[20];
     char modificationDate[20];
     access_info = localtime(&file_access_date);
     modification_info = localtime(&file_modification_date);
 
-    strftime(accessDate, 20,"%Y-%m-%dT%H:%M:%S", access_info);
-    strftime(modificationDate, 20,"%Y-%m-%dT%H:%M:%S", modification_info);
+    strftime(accessDate, 20, "%Y-%m-%dT%H:%M:%S", access_info);
+    strftime(modificationDate, 20, "%Y-%m-%dT%H:%M:%S", modification_info);
 
     char info_to_write[100];
 
@@ -137,13 +154,14 @@ int main(int argc, char *argv[], char *envp[])
     //Calculate file fingerprints
     if (args.arg_h)
     {
-        for(unsigned int i = 0; i < 3; i++)
+        for (unsigned int i = 0; i < 3; i++)
         {
-            if(args.h_args[i] != NULL){
+            if (args.h_args[i] != NULL)
+            {
                 fd1 = open("temp_file.txt", O_RDWR, 0777);
                 fp = fdopen(fd1, "r");
                 char *h_string = malloc(255 * sizeof(char));
-                char* tmp_string = malloc(25*sizeof(char));
+                char *tmp_string = malloc(25 * sizeof(char));
                 sprintf(h_string, "%ssum %s > temp_file.txt", args.h_args[i], args.f_or_dir);
                 system(h_string);
                 h_string = malloc(255 * sizeof(char));
@@ -160,14 +178,15 @@ int main(int argc, char *argv[], char *envp[])
 
     sprintf(info_to_write + strlen(info_to_write), "\n");
 
-    if(args.arg_o){
+    if (args.arg_o)
+    {
         int fd_o = open(args.outfile, O_RDWR, 0777);
         write(fd_o, info_to_write, strlen(info_to_write));
     }
     else
         write(STDOUT_FILENO, info_to_write, strlen(info_to_write));
-    
-        system("rm temp_file.txt");
+
+    system("rm temp_file.txt");
 
     return 0;
 }
@@ -203,10 +222,12 @@ fore_args get_programs_to_execute(int argc, char *argv[], char *envp[])
             char *auxiliar_string;
 
             auxiliar_string = strstr(argv[i], "md5");
-            if(auxiliar_string != NULL){
+            if (auxiliar_string != NULL)
+            {
                 strcpy(h_arg, auxiliar_string);
             }
-            else{
+            else
+            {
                 h_arg = NULL;
             }
 
@@ -222,10 +243,12 @@ fore_args get_programs_to_execute(int argc, char *argv[], char *envp[])
             }
 
             auxiliar_string = strstr(argv[i], "sha1");
-            if(auxiliar_string != NULL){
+            if (auxiliar_string != NULL)
+            {
                 strcpy(h_arg, auxiliar_string);
             }
-            else{
+            else
+            {
                 h_arg = NULL;
             }
 
@@ -248,10 +271,12 @@ fore_args get_programs_to_execute(int argc, char *argv[], char *envp[])
             }
 
             auxiliar_string = strstr(argv[i], "sha256");
-            if(auxiliar_string != NULL){
+            if (auxiliar_string != NULL)
+            {
                 strcpy(h_arg, auxiliar_string);
             }
-            else{
+            else
+            {
                 h_arg = NULL;
             }
 
