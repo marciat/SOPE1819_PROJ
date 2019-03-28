@@ -31,7 +31,7 @@ int main(int argc, char *argv[], char *envp[])
         return 1;
     }
 
-    fore_args args = get_programs_to_execute(argc, argv, envp);
+    fore_args args = get_programs_to_execute(argc, argv, envp);    
 
     if (args.arg_h)
     {
@@ -72,6 +72,7 @@ int main(int argc, char *argv[], char *envp[])
     free(file_string);
     file_string = malloc(255 * sizeof(char));
     fgets(file_string, 255, fp);
+    printf("%s\n",file_string);
     file_string = strstr(file_string, " ") + 1;
     fclose(fp);
     close(fd1);
