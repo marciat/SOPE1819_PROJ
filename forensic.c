@@ -50,8 +50,20 @@ int main(int argc, char *argv[], char *envp[])
                 }
                 else
                 { //File in directory
+                    //strcpy(argv[argc - 1], ent->d_name);
+                    char** tmp_argv = malloc(argc);
+                    for(int i = 0; i < argc; i++){
+                        tmp_argv[i] = malloc(sizeof(argv[i]));
+                        strcpy(tmp_argv[i], argv[i]);
+                    }
+                    memset(argv[argc-1], '\0', sizeof(argv[argc-1])*sizeof(char));
                     strcpy(argv[argc-1], ent->d_name);
-                    execvp("forensic", argv);
+                    //execvp("forensic", argv);
+                    process_data(argc, tmp_argv, envp);
+                    for(int i = 0; i < argc; i++){
+                        free(tmp_argv[i]);
+                    }
+                    free(tmp_argv);
                 }
             }
             closedir(dir);
@@ -61,7 +73,11 @@ int main(int argc, char *argv[], char *envp[])
     }
     else
     { //Found file
-        execvp("process_data", argv);
+        if (process_data(argc, argv, envp))
+        {
+            printf("ERROR!!!");
+            exit(1);
+        }
     }
 
     return 0;

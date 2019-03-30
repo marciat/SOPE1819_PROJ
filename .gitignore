@@ -14,3 +14,4 @@
 *.o
 .vscode/*
 *.txt
+*.sh

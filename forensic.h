@@ -17,3 +17,5 @@ fore_args get_programs_to_execute(int argc, char* argv[], char* envp[]);
 char* get_filename_var(char* envp[]);
 
 void remove_newline(char* string);
+
+int process_data(int argc, char* argv[], char* envp[]);

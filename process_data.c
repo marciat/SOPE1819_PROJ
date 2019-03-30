@@ -15,7 +15,7 @@
 
 #include "forensic.h"
 
-int main(int argc, char* argv[], char* envp[])
+int process_data(int argc, char* argv[], char* envp[])
 {
     fore_args args = get_programs_to_execute(argc, argv, envp);
 
@@ -164,6 +164,8 @@ int main(int argc, char* argv[], char* envp[])
 
     system("rm temp_file.txt");
     free(info_to_write);
+
+    return 0;
 }
 
 fore_args get_programs_to_execute(int argc, char *argv[], char *envp[])
