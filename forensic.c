@@ -50,22 +50,24 @@ int main(int argc, char *argv[], char *envp[])
                 }
                 else
                 { //File in directory
-                
-                    char** tmp_argv = malloc(argc); //New pointer for forensic arguments
-                    for(int i = 0; i < argc; i++){
+
+                    char **tmp_argv = malloc(argc); //New pointer for forensic arguments
+                    for (int i = 0; i < argc; i++)
+                    {
                         tmp_argv[i] = malloc(sizeof(argv[i]));
                         strcpy(tmp_argv[i], argv[i]);
                     }
-                    memset(tmp_argv[argc-1], '\0', sizeof(argv[argc-1])*sizeof(char)); //Clearing the field of tmp_argv with the name of the file
+                    memset(tmp_argv[argc - 1], '\0', sizeof(argv[argc - 1]) * sizeof(char)); //Clearing the field of tmp_argv with the name of the file
 
-                    char* file_name = malloc(sizeof(file_or_dir)+sizeof(ent->d_name));
+                    char *file_name = malloc(sizeof(file_or_dir) + sizeof(ent->d_name) + 1);
                     sprintf(file_name, "%s/%s", file_or_dir, ent->d_name);
-                    strcpy(argv[argc-1], file_name); //New file name
+                    strcpy(argv[argc - 1], file_name); //New file name
                     free(file_name);
                     
                     process_data(argc, tmp_argv, envp); //Calling process_data for the new file
-
-                    for(int i = 0; i < argc; i++){ //Free memory of tmp_argv
+                    
+                    for (int i = 0; i < argc; i++)
+                    { //Free memory of tmp_argv
                         free(tmp_argv[i]);
                     }
                     free(tmp_argv);
@@ -75,7 +77,7 @@ int main(int argc, char *argv[], char *envp[])
         }
     }
     else
-    { //Found file
+    {                                       //Found file
         if (process_data(argc, argv, envp)) //Process data for just one file
         {
             printf("ERROR!!!");
