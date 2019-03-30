@@ -23,7 +23,7 @@ int process_data(int argc, char* argv[], char* envp[])
     {
         if (args.h_args[0] == NULL)
         {
-            perror("-h flag requires arguments!!!\n");
+            printf("-h flag requires arguments!!!\n");
             exit(1);
         }
     }
@@ -219,10 +219,13 @@ fore_args get_programs_to_execute(int argc, char *argv[], char *envp[])
                 args.h_args[0] = "md5";
             }
 
+            free(h_arg);
+            h_arg = (char *)malloc(20);
+
             auxiliar_string = strstr(argv[i], "sha1");
             if (auxiliar_string != NULL)
             {
-                h_arg = strcpy(h_arg, auxiliar_string);
+                strcpy(h_arg, auxiliar_string);
             }
             else
             {
@@ -247,11 +250,13 @@ fore_args get_programs_to_execute(int argc, char *argv[], char *envp[])
                 }
             }
 
+            free(h_arg);
+            h_arg = (char *)malloc(20);
+
             auxiliar_string = strstr(argv[i], "sha256");
             if (auxiliar_string != NULL)
             {
-                write(STDOUT_FILENO, "OLA\n", 5);
-                h_arg = strcpy(h_arg, auxiliar_string);
+                strcpy(h_arg, auxiliar_string);
             }
             else
             {
