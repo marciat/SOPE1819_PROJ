@@ -61,13 +61,14 @@ int main(int argc, char *argv[], char *envp[])
 
                     char *file_name = malloc(sizeof(file_or_dir) + sizeof(ent->d_name) + 1);
                     sprintf(file_name, "%s/%s", file_or_dir, ent->d_name);
-                    strcpy(argv[argc - 1], file_name); //New file name
+                    strcpy(tmp_argv[argc - 1], file_name); //New file name
+
                     free(file_name);
                     
                     process_data(argc, tmp_argv, envp); //Calling process_data for the new file
                     
-                    for (int i = 0; i < argc; i++)
-                    { //Free memory of tmp_argv
+                    for (int i = 0; i < argc; i++) //Free memory of tmp_argv
+                    { 
                         free(tmp_argv[i]);
                     }
                     free(tmp_argv);

@@ -15,8 +15,10 @@
 
 #include "forensic.h"
 
-int process_data(int argc, char* argv[], char* envp[])
+int process_data(int argc, char *argv[], char *envp[])
 {
+    setbuf(stdout, NULL);
+
     fore_args args = get_programs_to_execute(argc, argv, envp);
 
     if (args.arg_h)
@@ -45,6 +47,7 @@ int process_data(int argc, char* argv[], char* envp[])
 
     char *file_string = malloc(255 * sizeof(char));
     sprintf(file_string, "file %s > temp_file.txt", args.f_or_dir);
+
     system(file_string);
     memset(file_string, '\0', sizeof(file_string) * sizeof(char));
     fgets(file_string, 255, fp);
@@ -127,6 +130,7 @@ int process_data(int argc, char* argv[], char* envp[])
 
     sprintf(info_to_write, "%s,%s,%d,%s,%s,%s", args.f_or_dir, file_string_result, file_size, file_access_owner, accessDate, modificationDate);
     free(file_string);
+
     //Calculate file fingerprints
     if (args.arg_h)
     {
@@ -219,9 +223,7 @@ fore_args get_programs_to_execute(int argc, char *argv[], char *envp[])
                 args.h_args[0] = "md5";
             }
 
-            memset(h_arg,'\0',20);
-            //free(h_arg);
-            //h_arg = (char *)malloc(20);
+            memset(h_arg, '\0', 20);
 
             auxiliar_string = strstr(argv[i], "sha1");
             if (auxiliar_string != NULL)
@@ -251,9 +253,7 @@ fore_args get_programs_to_execute(int argc, char *argv[], char *envp[])
                 }
             }
 
-            memset(h_arg,'\0',20);
-            //free(h_arg);
-            //h_arg = (char *)malloc(20);
+            memset(h_arg, '\0', 20);
 
             auxiliar_string = strstr(argv[i], "sha256");
             if (auxiliar_string != NULL)
