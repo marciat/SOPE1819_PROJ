@@ -219,8 +219,9 @@ fore_args get_programs_to_execute(int argc, char *argv[], char *envp[])
                 args.h_args[0] = "md5";
             }
 
-            free(h_arg);
-            h_arg = (char *)malloc(20);
+            memset(h_arg,'\0',20);
+            //free(h_arg);
+            //h_arg = (char *)malloc(20);
 
             auxiliar_string = strstr(argv[i], "sha1");
             if (auxiliar_string != NULL)
@@ -250,8 +251,9 @@ fore_args get_programs_to_execute(int argc, char *argv[], char *envp[])
                 }
             }
 
-            free(h_arg);
-            h_arg = (char *)malloc(20);
+            memset(h_arg,'\0',20);
+            //free(h_arg);
+            //h_arg = (char *)malloc(20);
 
             auxiliar_string = strstr(argv[i], "sha256");
             if (auxiliar_string != NULL)
