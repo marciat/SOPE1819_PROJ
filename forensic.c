@@ -33,8 +33,8 @@ int main(int argc, char *argv[], char *envp[])
     fore_args arguments = parse_data(argc, argv, envp);
 
     struct stat directory_stat;
-    if ((stat(arguments.f_or_dir, &directory_stat) >= 0) && S_ISDIR(directory_stat.st_mode))
-    { //Found directory
+    if ((stat(arguments.f_or_dir, &directory_stat) >= 0) && S_ISDIR(directory_stat.st_mode)) //Found directory
+    { 
         DIR *dir;
         struct dirent *ent;
         if ((dir = opendir(arguments.f_or_dir)) != NULL)
@@ -60,25 +60,26 @@ int main(int argc, char *argv[], char *envp[])
                 {
                     if (arguments.arg_r) //Calling forensic recursively if -r is specified in the arguments
                     {
-                        if(fork() == 0){
+                        if (fork() == 0)
+                        {
                             strcpy(argv[argc - 1], new_name); //New directory name
-                            //execvp("forensic", argv);
+                            execvp("forensic", argv);
                         }
-                        printf("%s\n", new_name);
                     }
                 }
-                else
-                { //File in directory
+                else //File in directory
+                { 
 
                     strcpy(argv[argc - 1], new_name); //New file name
 
                     process_data(arguments); //Calling process_data for the new file
-
-                    strcpy(argv[argc - 1], originalDirectory);
                 }
+
+                strcpy(argv[argc - 1], originalDirectory);
 
                 free(new_name);
             }
+
             closedir(dir); //Closing directory
         }
     }
