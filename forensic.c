@@ -32,16 +32,26 @@ int main(int argc, char *argv[], char *envp[])
 
     fore_args arguments = parse_data(argc, argv, envp);
 
+    //char *originalDirectory = malloc(strlen(argv[argc - 1]));
+    //strcpy(originalDirectory, argv[argc - 1]);
+
+    if (forensic(arguments))//, originalDirectory))
+        return 1;
+
+    //free(originalDirectory);
+
+    return 0;
+}
+
+int forensic(fore_args arguments)//, char *originalDirectory)
+{
     struct stat directory_stat;
     if ((stat(arguments.f_or_dir, &directory_stat) >= 0) && S_ISDIR(directory_stat.st_mode)) //Found directory
-    { 
+    {
         DIR *dir;
         struct dirent *ent;
         if ((dir = opendir(arguments.f_or_dir)) != NULL)
         {
-            char *originalDirectory = malloc(strlen(argv[argc - 1]));
-            strcpy(originalDirectory, argv[argc - 1]);
-
             while ((ent = readdir(dir)) != NULL)
             {
                 if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0)
@@ -50,8 +60,7 @@ int main(int argc, char *argv[], char *envp[])
                 char *new_name = malloc(sizeof(arguments.f_or_dir) + sizeof(ent->d_name) + 1);
                 sprintf(new_name, "%s/%s", arguments.f_or_dir, ent->d_name);
 
-                int ret_value = stat(new_name, &directory_stat);
-                if (ret_value != 0)
+                if (stat(new_name, &directory_stat) != 0)
                 {
                     perror("stat");
                 }
@@ -62,20 +71,29 @@ int main(int argc, char *argv[], char *envp[])
                     {
                         if (fork() == 0)
                         {
-                            strcpy(argv[argc - 1], new_name); //New directory name
-                            execvp("forensic", argv);
+                            strcpy(arguments.f_or_dir, new_name); //New directory name
+
+                            if (forensic(arguments))//, originalDirectory))
+                                return 1;
+                            break;
                         }
                     }
                 }
                 else //File in directory
-                { 
+                {
+                    char* tmp_f_or_dir = malloc(sizeof(arguments.f_or_dir));
+                    strcpy(tmp_f_or_dir, arguments.f_or_dir);
+                    strcpy(arguments.f_or_dir, new_name); //New file name
 
-                    strcpy(argv[argc - 1], new_name); //New file name
+                    if (process_data(arguments)) //Calling process_data for the new file
+                    {
+                        printf("ERROR!!!");
+                        exit(1);
+                    }
 
-                    process_data(arguments); //Calling process_data for the new file
+                    strcpy(arguments.f_or_dir,tmp_f_or_dir);
+                    free(tmp_f_or_dir);
                 }
-
-                strcpy(argv[argc - 1], originalDirectory);
 
                 free(new_name);
             }
@@ -83,8 +101,8 @@ int main(int argc, char *argv[], char *envp[])
             closedir(dir); //Closing directory
         }
     }
-    else
-    {                                //Found file
+    else //Found file
+    {
         if (process_data(arguments)) //Process data for just one file
         {
             printf("ERROR!!!");

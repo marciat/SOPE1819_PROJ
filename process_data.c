@@ -27,7 +27,14 @@ int process_data(fore_args file_arguments)
     }
 
     //Read File Type
-    int fd1 = open("temp_file.txt", O_RDWR | O_CREAT, 0777);
+    char* file_name = malloc(255*sizeof(char));
+    sprintf(file_name, "%s.txt", file_arguments.f_or_dir);
+    for(size_t i = 0; i < strlen(file_name); i++){
+        if(file_name[i] == '/')
+            file_name[i] = '_';
+    }
+
+    int fd1 = open(file_name, O_RDWR | O_CREAT, 0777);
     if (fd1 < 0)
     {
         perror("open");
@@ -42,7 +49,7 @@ int process_data(fore_args file_arguments)
     }
 
     char *file_string = malloc(255 * sizeof(char));
-    sprintf(file_string, "file %s > temp_file.txt", file_arguments.f_or_dir);
+    sprintf(file_string, "file %s > %s", file_arguments.f_or_dir, file_name);
     system(file_string);
     memset(file_string, '\0', sizeof(file_string) * sizeof(char));
     fgets(file_string, 255, fp);
@@ -124,7 +131,7 @@ int process_data(fore_args file_arguments)
     char *info_to_write = malloc(1000 * sizeof(char));
 
     sprintf(info_to_write, "%s,%s,%d,%s,%s,%s", file_arguments.f_or_dir, file_string_result, file_size, file_access_owner, accessDate, modificationDate);
-    free(file_string);
+
     //Calculate file fingerprints
     if (file_arguments.arg_h)
     {
@@ -132,11 +139,11 @@ int process_data(fore_args file_arguments)
         {
             if (file_arguments.h_args[i] != NULL)
             {
-                fd1 = open("temp_file.txt", O_RDWR, 0777);
+                fd1 = open(file_name, O_RDWR, 0777);
                 fp = fdopen(fd1, "r");
                 char *h_string = malloc(255 * sizeof(char));
                 char *tmp_string = malloc(25 * sizeof(char));
-                sprintf(h_string, "%ssum %s > temp_file.txt", file_arguments.h_args[i], file_arguments.f_or_dir);
+                sprintf(h_string, "%ssum %s > %s", file_arguments.h_args[i], file_arguments.f_or_dir, file_name);
                 system(h_string);
                 free(h_string);
                 h_string = malloc(255 * sizeof(char));
@@ -161,9 +168,16 @@ int process_data(fore_args file_arguments)
     else
         write(STDOUT_FILENO, info_to_write, strlen(info_to_write));
 
-    system("rm temp_file.txt");
+    size_t fs = sizeof(file_string);
+    memset(file_string, '\0', fs);
+
+    sprintf(file_string, "rm %s", file_name);
+
+    system(file_string);
+
     free(info_to_write);
+    free(file_string);
+    free(file_name);
 
     return 0;
 }
-

@@ -12,6 +12,8 @@ typedef struct
     char *f_or_dir;    //File or directory to be evaluated
 } fore_args;
 
+int forensic(fore_args arguments);//, char *originalDirectory);
+
 fore_args parse_data(int argc, char *argv[], char *envp[]);
 
 char* get_filename_var(char* envp[]);
