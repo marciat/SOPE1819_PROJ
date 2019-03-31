@@ -15,10 +15,8 @@
 
 #include "forensic.h"
 
-int process_data(int argc, char *argv[], char *envp[])
+int process_data(int argc, char* argv[], char* envp[])
 {
-    setbuf(stdout, NULL);
-
     fore_args args = get_programs_to_execute(argc, argv, envp);
 
     if (args.arg_h)
@@ -47,7 +45,6 @@ int process_data(int argc, char *argv[], char *envp[])
 
     char *file_string = malloc(255 * sizeof(char));
     sprintf(file_string, "file %s > temp_file.txt", args.f_or_dir);
-
     system(file_string);
     memset(file_string, '\0', sizeof(file_string) * sizeof(char));
     fgets(file_string, 255, fp);
@@ -130,7 +127,6 @@ int process_data(int argc, char *argv[], char *envp[])
 
     sprintf(info_to_write, "%s,%s,%d,%s,%s,%s", args.f_or_dir, file_string_result, file_size, file_access_owner, accessDate, modificationDate);
     free(file_string);
-
     //Calculate file fingerprints
     if (args.arg_h)
     {
@@ -144,6 +140,7 @@ int process_data(int argc, char *argv[], char *envp[])
                 char *tmp_string = malloc(25 * sizeof(char));
                 sprintf(h_string, "%ssum %s > temp_file.txt", args.h_args[i], args.f_or_dir);
                 system(h_string);
+                free(h_string);
                 h_string = malloc(255 * sizeof(char));
                 fgets(h_string, 255, fp);
                 sscanf(h_string, "%s %s", h_string, tmp_string);
@@ -200,6 +197,7 @@ fore_args get_programs_to_execute(int argc, char *argv[], char *envp[])
             i++;
 
             char *h_arg = (char *)malloc(20);
+            memset(h_arg,'\0',20);
             char *auxiliar_string;
 
             auxiliar_string = strstr(argv[i], "md5");
@@ -209,10 +207,10 @@ fore_args get_programs_to_execute(int argc, char *argv[], char *envp[])
             }
             else
             {
-                h_arg = NULL;
+                memset(h_arg,'\0',20);
             }
 
-            if (h_arg != NULL)
+            if (h_arg[0]!= '\0')
             {
                 if (h_arg[3] != ',' && h_arg[3] != '\0')
                 {
@@ -223,7 +221,7 @@ fore_args get_programs_to_execute(int argc, char *argv[], char *envp[])
                 args.h_args[0] = "md5";
             }
 
-            memset(h_arg, '\0', 20);
+            memset(h_arg,'\0',20);
 
             auxiliar_string = strstr(argv[i], "sha1");
             if (auxiliar_string != NULL)
@@ -232,10 +230,10 @@ fore_args get_programs_to_execute(int argc, char *argv[], char *envp[])
             }
             else
             {
-                h_arg = NULL;
+                memset(h_arg,'\0',20);
             }
 
-            if (h_arg != NULL)
+            if (h_arg[0]!= '\0')
             {
                 if (h_arg[4] != ',' && h_arg[4] != '\0')
                 {
@@ -253,7 +251,7 @@ fore_args get_programs_to_execute(int argc, char *argv[], char *envp[])
                 }
             }
 
-            memset(h_arg, '\0', 20);
+            memset(h_arg,'\0',20);
 
             auxiliar_string = strstr(argv[i], "sha256");
             if (auxiliar_string != NULL)
@@ -262,10 +260,10 @@ fore_args get_programs_to_execute(int argc, char *argv[], char *envp[])
             }
             else
             {
-                h_arg = NULL;
+                memset(h_arg,'\0',20);
             }
 
-            if (h_arg != NULL)
+            if (h_arg[0]!= '\0')
             {
                 if (h_arg[6] != ',' && h_arg[6] != '\0')
                 {

@@ -39,6 +39,9 @@ int main(int argc, char *argv[], char *envp[])
         struct dirent *ent;
         if ((dir = opendir(file_or_dir)) != NULL)
         {
+            char* originalDirectory = malloc(strlen(argv[argc-1]));
+            strcpy(originalDirectory, argv[argc-1]);
+
             while ((ent = readdir(dir)) != NULL)
             {
                 if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0)
@@ -51,27 +54,15 @@ int main(int argc, char *argv[], char *envp[])
                 else
                 { //File in directory
 
-                    char **tmp_argv = malloc(argc); //New pointer for forensic arguments
-                    for (int i = 0; i < argc; i++)
-                    {
-                        tmp_argv[i] = malloc(sizeof(argv[i]));
-                        strcpy(tmp_argv[i], argv[i]);
-                    }
-                    memset(tmp_argv[argc - 1], '\0', sizeof(argv[argc - 1]) * sizeof(char)); //Clearing the field of tmp_argv with the name of the file
-
                     char *file_name = malloc(sizeof(file_or_dir) + sizeof(ent->d_name) + 1);
                     sprintf(file_name, "%s/%s", file_or_dir, ent->d_name);
-                    strcpy(tmp_argv[argc - 1], file_name); //New file name
+                    strcpy(argv[argc-1], file_name); //New file name
 
                     free(file_name);
                     
-                    process_data(argc, tmp_argv, envp); //Calling process_data for the new file
+                    process_data(argc, argv, envp); //Calling process_data for the new file
                     
-                    for (int i = 0; i < argc; i++) //Free memory of tmp_argv
-                    { 
-                        free(tmp_argv[i]);
-                    }
-                    free(tmp_argv);
+                    strcpy(argv[argc-1],originalDirectory);
                 }
             }
             closedir(dir); //Closing directory
