@@ -15,13 +15,11 @@
 
 #include "forensic.h"
 
-int process_data(int argc, char* argv[], char* envp[])
+int process_data(fore_args file_arguments)
 {
-    fore_args args = get_programs_to_execute(argc, argv, envp);
-
-    if (args.arg_h)
+    if (file_arguments.arg_h)
     {
-        if (args.h_args[0] == NULL)
+        if (file_arguments.h_args[0] == NULL)
         {
             printf("-h flag requires arguments!!!\n");
             exit(1);
@@ -44,7 +42,7 @@ int process_data(int argc, char* argv[], char* envp[])
     }
 
     char *file_string = malloc(255 * sizeof(char));
-    sprintf(file_string, "file %s > temp_file.txt", args.f_or_dir);
+    sprintf(file_string, "file %s > temp_file.txt", file_arguments.f_or_dir);
     system(file_string);
     memset(file_string, '\0', sizeof(file_string) * sizeof(char));
     fgets(file_string, 255, fp);
@@ -59,7 +57,7 @@ int process_data(int argc, char* argv[], char* envp[])
     //Read File Data
     char *path_string = malloc(255 * sizeof(char));
     struct stat statbuf;
-    sprintf(path_string, "%s", args.f_or_dir);
+    sprintf(path_string, "%s", file_arguments.f_or_dir);
     if (stat(path_string, &statbuf) < 0)
     {
         exit(1);
@@ -125,20 +123,20 @@ int process_data(int argc, char* argv[], char* envp[])
 
     char *info_to_write = malloc(1000 * sizeof(char));
 
-    sprintf(info_to_write, "%s,%s,%d,%s,%s,%s", args.f_or_dir, file_string_result, file_size, file_access_owner, accessDate, modificationDate);
+    sprintf(info_to_write, "%s,%s,%d,%s,%s,%s", file_arguments.f_or_dir, file_string_result, file_size, file_access_owner, accessDate, modificationDate);
     free(file_string);
     //Calculate file fingerprints
-    if (args.arg_h)
+    if (file_arguments.arg_h)
     {
         for (unsigned int i = 0; i < 3; i++)
         {
-            if (args.h_args[i] != NULL)
+            if (file_arguments.h_args[i] != NULL)
             {
                 fd1 = open("temp_file.txt", O_RDWR, 0777);
                 fp = fdopen(fd1, "r");
                 char *h_string = malloc(255 * sizeof(char));
                 char *tmp_string = malloc(25 * sizeof(char));
-                sprintf(h_string, "%ssum %s > temp_file.txt", args.h_args[i], args.f_or_dir);
+                sprintf(h_string, "%ssum %s > temp_file.txt", file_arguments.h_args[i], file_arguments.f_or_dir);
                 system(h_string);
                 free(h_string);
                 h_string = malloc(255 * sizeof(char));
@@ -155,9 +153,9 @@ int process_data(int argc, char* argv[], char* envp[])
 
     sprintf(info_to_write + strlen(info_to_write), "\n");
 
-    if (args.arg_o)
+    if (file_arguments.arg_o)
     {
-        int fd_o = open(args.outfile, O_RDWR | O_CREAT, 0777);
+        int fd_o = open(file_arguments.outfile, O_RDWR | O_CREAT, 0777);
         write(fd_o, info_to_write, strlen(info_to_write));
     }
     else
@@ -169,162 +167,3 @@ int process_data(int argc, char* argv[], char* envp[])
     return 0;
 }
 
-fore_args get_programs_to_execute(int argc, char *argv[], char *envp[])
-{
-    fore_args args;
-    args.arg_r = false;
-    args.arg_h = false;
-    for (int i = 0; i < 3; i++)
-    {
-        args.h_args[i] = NULL;
-    }
-    args.arg_o = false;
-    args.outfile = NULL;
-    args.arg_v = false;
-    args.logfilename = NULL;
-    args.f_or_dir = NULL;
-
-    for (int i = 1; i < argc - 1; i++)
-    {
-        if (strcmp(argv[i], "-r") == 0)
-        {
-            args.arg_r = true;
-            continue;
-        }
-        else if (strcmp(argv[i], "-h") == 0)
-        {
-            args.arg_h = true;
-            i++;
-
-            char *h_arg = (char *)malloc(20);
-            memset(h_arg,'\0',20);
-            char *auxiliar_string;
-
-            auxiliar_string = strstr(argv[i], "md5");
-            if (auxiliar_string != NULL)
-            {
-                strcpy(h_arg, auxiliar_string);
-            }
-            else
-            {
-                memset(h_arg,'\0',20);
-            }
-
-            if (h_arg[0]!= '\0')
-            {
-                if (h_arg[3] != ',' && h_arg[3] != '\0')
-                {
-                    printf("Invalid argument!\n");
-                    exit(1);
-                }
-
-                args.h_args[0] = "md5";
-            }
-
-            memset(h_arg,'\0',20);
-
-            auxiliar_string = strstr(argv[i], "sha1");
-            if (auxiliar_string != NULL)
-            {
-                strcpy(h_arg, auxiliar_string);
-            }
-            else
-            {
-                memset(h_arg,'\0',20);
-            }
-
-            if (h_arg[0]!= '\0')
-            {
-                if (h_arg[4] != ',' && h_arg[4] != '\0')
-                {
-                    printf("Invalid argument!\n");
-                    exit(1);
-                }
-
-                if (args.h_args[0] != NULL)
-                {
-                    args.h_args[1] = "sha1";
-                }
-                else
-                {
-                    args.h_args[0] = "sha1";
-                }
-            }
-
-            memset(h_arg,'\0',20);
-
-            auxiliar_string = strstr(argv[i], "sha256");
-            if (auxiliar_string != NULL)
-            {
-                strcpy(h_arg, auxiliar_string);
-            }
-            else
-            {
-                memset(h_arg,'\0',20);
-            }
-
-            if (h_arg[0]!= '\0')
-            {
-                if (h_arg[6] != ',' && h_arg[6] != '\0')
-                {
-                    printf("Invalid argument!\n");
-                    exit(1);
-                }
-
-                if (args.h_args[0] != NULL)
-                {
-                    if (args.h_args[1] != NULL)
-                    {
-                        args.h_args[2] = "sha256";
-                    }
-                    else
-                    {
-                        args.h_args[1] = "sha256";
-                    }
-                }
-                else
-                {
-                    args.h_args[0] = "sha256";
-                }
-            }
-
-            free(h_arg);
-
-            continue;
-        }
-        else if (strcmp(argv[i], "-o") == 0)
-        {
-            args.arg_o = true;
-            i++;
-            args.outfile = argv[i];
-            continue;
-        }
-        else if (strcmp(argv[i], "-v") == 0)
-        {
-            args.arg_v = true;
-            args.logfilename = get_filename_var(envp);
-            continue;
-        }
-    }
-
-    args.f_or_dir = argv[argc - 1];
-
-    return args;
-}
-
-char *get_filename_var(char *envp[])
-{
-    unsigned i = 0;
-
-    while (envp[i] != NULL)
-    {
-        if (strncmp("LOGFILENAME=", envp[i], 12) == 0)
-            break;
-
-        i++;
-    }
-    char *logfilename;
-    logfilename = (char *)malloc(25 * sizeof(char));
-    sprintf(logfilename, "%s", envp[i] + 5);
-    return logfilename;
-}
