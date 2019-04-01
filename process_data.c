@@ -26,6 +26,16 @@ int process_data(fore_args file_arguments)
         }
     }
 
+    if (file_arguments.arg_o)
+    {
+        if (file_arguments.outfile == NULL)
+        {
+            printf("-v flag requires an argument!!!\n");
+            exit(1);
+        }
+    }
+
+
     //Read File Type
     char* file_name = malloc(255*sizeof(char));
     sprintf(file_name, "%s.txt", file_arguments.f_or_dir);
@@ -162,7 +172,7 @@ int process_data(fore_args file_arguments)
 
     if (file_arguments.arg_o)
     {
-        int fd_o = open(file_arguments.outfile, O_RDWR | O_CREAT, 0777);
+        int fd_o = open(file_arguments.outfile, O_RDWR | O_CREAT | O_APPEND, 0777);
         write(fd_o, info_to_write, strlen(info_to_write));
     }
     else

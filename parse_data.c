@@ -142,6 +142,9 @@ fore_args parse_data(int argc, char *argv[], char *envp[])
         {
             args.arg_o = true;
             i++;
+            if(strcmp(argv[i], argv[argc-1]) == 0 || (strcmp(argv[i], "-v")) == 0){
+                break;
+            }
             args.outfile = argv[i];
             continue;
         }
