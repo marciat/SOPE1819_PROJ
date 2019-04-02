@@ -8,6 +8,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/times.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <time.h>
@@ -17,6 +18,9 @@
 
 int process_data(fore_args file_arguments)
 {
+    clock_t start, event;
+    long ticks;
+
     if (file_arguments.arg_h)
     {
         if (file_arguments.h_args[0] == NULL)
@@ -30,11 +34,22 @@ int process_data(fore_args file_arguments)
     {
         if (file_arguments.outfile == NULL)
         {
-            printf("-v flag requires an argument!!!\n");
+            printf("-o flag requires an argument!!!\n");
             exit(1);
         }
     }
 
+    if(file_arguments.arg_v)
+    {
+        if(file_arguments.logfilename == NULL)
+        {
+            printf("LOGFILENAME variable not defined!!!\n");
+            exit(1);
+        }
+    }
+
+    start = times(&t);
+    ticks = sysconf(_SC_CLK_TCK);
 
     //Read File Type
     char* file_name = malloc(255*sizeof(char));
