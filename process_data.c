@@ -96,11 +96,11 @@ int process_data(fore_args file_arguments)
     }
     free(path_string);
 
-    char file_access_owner[3];
+    char file_access_owner[4];
     time_t file_modification_date;
     time_t file_access_date;
     int file_size = 0;
-    for (unsigned int i = 0; i < 3; i++)
+    for (unsigned int i = 0; i < 4; i++)
     {
         file_access_owner[i] = '\0';
     }
@@ -174,11 +174,8 @@ int process_data(fore_args file_arguments)
                 fgets(h_string, 255, fp);
                 sscanf(h_string, "%s %s", h_string, tmp_string);
                 sprintf(info_to_write + strlen(info_to_write), ",%s", h_string);
-                printf("1\n");
                 free(h_string);
-                printf("2\n");
                 free(tmp_string);
-                printf("3\n");
                 fclose(fp);
                 close(fd1);
             }
@@ -195,15 +192,12 @@ int process_data(fore_args file_arguments)
     else
         write(STDOUT_FILENO, info_to_write, strlen(info_to_write));
 
-    size_t fs = sizeof(file_string);
-    memset(file_string, '\0', fs);
-
-    sprintf(file_string, "rm %s", file_name);
-
-    system(file_string);
+    int status = remove(file_name);
+    if(status != 0 ){
+        perror("Remove");
+    }
 
     free(info_to_write);
-    free(file_string);
     //free(file_name);
     return 0;
 }
