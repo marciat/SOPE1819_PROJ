@@ -21,3 +21,5 @@ char* get_filename_var(char* envp[]);
 void remove_newline(char* string);
 
 int process_data(fore_args file_arguments);
+
+void free_arguments(fore_args *arguments);   
