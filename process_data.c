@@ -76,7 +76,7 @@ int process_data(fore_args file_arguments)
     char *file_string = malloc(255 * sizeof(char));
     sprintf(file_string, "file %s > %s", file_arguments.f_or_dir, file_name);
     system(file_string);
-    memset(file_string, '\0', sizeof(file_string) * sizeof(char));
+    memset(file_string, '\0', strlen(file_string) * sizeof(char));
     fgets(file_string, 255, fp);
     fclose(fp);
     close(fd1);
