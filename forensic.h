@@ -16,7 +16,7 @@ int forensic(fore_args arguments);//, char *originalDirectory);
 
 fore_args parse_data(int argc, char *argv[], char *envp[]);
 
-char* get_filename_var(char* envp[]);
+char* get_filename_var();
 
 void remove_newline(char* string);
 

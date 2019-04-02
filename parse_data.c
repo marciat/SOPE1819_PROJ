@@ -162,22 +162,13 @@ fore_args parse_data(int argc, char *argv[], char *envp[])
     return args;
 }
 
-char *get_filename_var(char *envp[])
+char *get_filename_var()
 {
-    unsigned i = 0;
 
-    while (envp[i] != NULL)
-    {
-        if (strncmp("LOGFILENAME=", envp[i], 12) == 0)
-        {
-            char *logfilename;
-            logfilename = (char *)malloc(25 * sizeof(char));
-            sprintf(logfilename, "%s", envp[i] + 5);
-            return logfilename;
-        }
+    char* var_name = "LOGFILENAME";
 
-        i++;
-    }
+    if(getenv(var_name) != NULL)
+        return getenv(var_name);
     
     //If the LOGFILENAME variable doesn't exist, create new file for logs
     char*logfilename = (char*)malloc(9*sizeof(char));
@@ -188,6 +179,7 @@ char *get_filename_var(char *envp[])
 
 void free_arguments(fore_args *arguments)
 {
+    (void)arguments;
     /*if (arguments->f_or_dir != NULL)
         free(arguments->f_or_dir);*/
     /*for (int i = 0; i < 3; i++)
@@ -201,8 +193,8 @@ void free_arguments(fore_args *arguments)
             break;
         }
     }*/
-    if (arguments->logfilename != NULL)
-        free(arguments->logfilename);
+    /*if (arguments->logfilename != NULL)
+        free(arguments->logfilename);*/
     /*if (arguments->outfile != NULL)
         free(arguments->outfile);*/
 }

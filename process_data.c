@@ -15,11 +15,24 @@
 #include <dirent.h>
 
 #include "forensic.h"
+#include "logfileinfo.h"
+
+void write_to_logfile(bool write_logfile, int logfile, clock_t inst, pid_t pid, enum evt_type event, char* description){
+    char *info = malloc(500 * sizeof(char));
+    long ticks = sysconf(_SC_CLK_TCK);
+    if(!write_logfile)
+        return;
+    sprintf(info, "%.2f - %d - %s %s", (double)inst/ticks, pid, evt_names[event], description);
+    write(logfile, info, strlen(info));
+    free(info);
+}
 
 int process_data(fore_args file_arguments)
 {
-    /*clock_t start, event;
-    long ticks;*/
+    //clock_t event;
+    //struct tms t;
+    bool write_logfile = false;
+    char* event_desc = malloc(500 * sizeof(char));
 
     if (file_arguments.arg_h)
     {
@@ -41,20 +54,43 @@ int process_data(fore_args file_arguments)
 
     if(file_arguments.arg_v)
     {
+        write_logfile = true;
         if(file_arguments.logfilename == NULL)
         {
             printf("LOGFILENAME variable not defined!!!\n");
             exit(1);
         }
     }
-    /*start = times(&t);
-    ticks = sysconf(_SC_CLK_TCK);*/
+
+    int logfile = open(file_arguments.logfilename, O_RDWR | O_CREAT, 0777);
+    if(logfile < 0)
+    {
+        perror("open");
+        exit(-1);
+    }
+
+    sprintf(event_desc, "forensic ");
+    if(file_arguments.arg_r)
+        sprintf(event_desc + strlen(event_desc), "-r ");
+    if(file_arguments.arg_h){
+        sprintf(event_desc + strlen(event_desc), "-h ");
+        for(int i=0; i<3; i++){
+            if(file_arguments.h_args[i] == NULL)
+                break;
+            if(i == 0)
+                sprintf(event_desc + strlen(event_desc), "%s", file_arguments.h_args[i]);
+            else
+                sprintf(event_desc + strlen(event_desc), ",%s", file_arguments.h_args[i]);
+        }
+    }
+
+    write_to_logfile(write_logfile, logfile, times(NULL), getpid(), COMMAND, event_desc);
 
     //Read File Type
     char *file_name = malloc(255 * sizeof(char));
     sprintf(file_name, "f%s.txt", file_arguments.f_or_dir);
     for (size_t i = 0; i < strlen(file_name); i++)
-    {
+    {        
         if (file_name[i] == '/')
             file_name[i] = '_';
     }
@@ -96,11 +132,11 @@ int process_data(fore_args file_arguments)
     }
     free(path_string);
 
-    char file_access_owner[3];
+    char file_access_owner[4];
     time_t file_modification_date;
     time_t file_access_date;
     int file_size = 0;
-    for (unsigned int i = 0; i < 3; i++)
+    for (unsigned int i = 0; i < 4; i++)
     {
         file_access_owner[i] = '\0';
     }
@@ -174,11 +210,9 @@ int process_data(fore_args file_arguments)
                 fgets(h_string, 255, fp);
                 sscanf(h_string, "%s %s", h_string, tmp_string);
                 sprintf(info_to_write + strlen(info_to_write), ",%s", h_string);
-                printf("1\n");
                 free(h_string);
-                printf("2\n");
+
                 free(tmp_string);
-                printf("3\n");
                 fclose(fp);
                 close(fd1);
             }
@@ -186,6 +220,7 @@ int process_data(fore_args file_arguments)
     }
 
     sprintf(info_to_write + strlen(info_to_write), "\n");
+ 
 
     if (file_arguments.arg_o)
     {
@@ -195,12 +230,10 @@ int process_data(fore_args file_arguments)
     else
         write(STDOUT_FILENO, info_to_write, strlen(info_to_write));
 
-    size_t fs = sizeof(file_string);
-    memset(file_string, '\0', fs);
-
-    sprintf(file_string, "rm %s", file_name);
-
-    system(file_string);
+    int status = remove(file_name);
+    if(status!=0){
+        perror("remove");
+    }
 
     free(info_to_write);
     free(file_string);

@@ -19,6 +19,7 @@
 void sigint_handler(int signo)
 {
     printf("In SIGINT handler ...\n");
+    (void)signo;
 }
 
 int main(int argc, char *argv[], char *envp[])
@@ -37,7 +38,7 @@ int main(int argc, char *argv[], char *envp[])
     }
 
     __sighandler_t old_handler;
-    if ((old_handler = signal(SIGINT, sigint_handler)) < 0)
+    if ((old_handler = signal(SIGINT, sigint_handler)) == SIG_ERR)
     {
         perror("signal");
         exit(1);
