@@ -39,6 +39,9 @@ int main(int argc, char *argv[], char *envp[])
         return 1;
 
     //free(originalDirectory);
+    
+    free_arguments(&arguments);
+
 
     return 0;
 }
@@ -109,9 +112,6 @@ int forensic(fore_args arguments)//, char *originalDirectory)
             exit(1);
         }
     }
-
-    
-    //free_arguments(&arguments);
 
     return 0;
 }

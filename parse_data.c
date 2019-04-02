@@ -181,11 +181,11 @@ char *get_filename_var(char *envp[])
 
 void free_arguments(fore_args *arguments)
 {
-    if (arguments->f_or_dir != NULL)
-        free(arguments->f_or_dir);
-    for (int i = 0; i < 3; i++)
+    /*if (arguments->f_or_dir != NULL)
+        free(arguments->f_or_dir);*/
+    /*for (int i = 0; i < 3; i++)
     {
-        if (arguments->h_args != NULL)
+        if (arguments->h_args[i] != NULL)
         {
             free(arguments->h_args[i]);
         }
@@ -193,9 +193,9 @@ void free_arguments(fore_args *arguments)
         {
             break;
         }
-    }
+    }*/
     if (arguments->logfilename != NULL)
         free(arguments->logfilename);
-    if (arguments->outfile != NULL)
-        free(arguments->outfile);
+    /*if (arguments->outfile != NULL)
+        free(arguments->outfile);*/
 }
