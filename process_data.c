@@ -8,7 +8,6 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/times.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <time.h>
@@ -19,20 +18,39 @@
 
 void write_to_logfile(bool write_logfile, int logfile, clock_t inst, pid_t pid, enum evt_type event, char* description){
     char *info = malloc(500 * sizeof(char));
-    long ticks = sysconf(_SC_CLK_TCK);
+    //long ticks = sysconf(_SC_CLK_TCK);
     if(!write_logfile)
         return;
-    sprintf(info, "%.2f - %d - %s %s", (double)inst/ticks, pid, evt_names[event], description);
+    sprintf(info, "%.2f - %d - %s %s", (double)inst*1000.0/CLOCKS_PER_SEC, pid, evt_names[event], description);
     write(logfile, info, strlen(info));
     free(info);
 }
 
 int process_data(fore_args file_arguments)
 {
-    //clock_t event;
-    //struct tms t;
+    clock_t start = clock();
+    clock_t event;
+    
     bool write_logfile = false;
     char* event_desc = malloc(500 * sizeof(char));
+
+    sprintf(event_desc, "forensic ");
+    if(file_arguments.arg_r)
+        sprintf(event_desc + strlen(event_desc), "-r ");
+    if(file_arguments.arg_h){
+        sprintf(event_desc + strlen(event_desc), "-h ");
+        for(int i=0; i<3; i++){
+            if(file_arguments.h_args[i] == NULL)
+                break;
+            if(i == 0)
+                sprintf(event_desc + strlen(event_desc), "%s", file_arguments.h_args[i]);
+            else
+                sprintf(event_desc + strlen(event_desc), ",%s", file_arguments.h_args[i]);
+        }
+    }
+
+    event = clock();
+    write_to_logfile(write_logfile, logfile, (event-start), getpid(), COMMAND, event_desc);
 
     if (file_arguments.arg_h)
     {
@@ -62,29 +80,13 @@ int process_data(fore_args file_arguments)
         }
     }
 
-    int logfile = open(file_arguments.logfilename, O_RDWR | O_CREAT, 0777);
+    int logfile = open(file_arguments.logfilename, O_RDWR | O_CREAT | O_APPEND, 0777);
     if(logfile < 0)
     {
         perror("open");
         exit(-1);
     }
 
-    sprintf(event_desc, "forensic ");
-    if(file_arguments.arg_r)
-        sprintf(event_desc + strlen(event_desc), "-r ");
-    if(file_arguments.arg_h){
-        sprintf(event_desc + strlen(event_desc), "-h ");
-        for(int i=0; i<3; i++){
-            if(file_arguments.h_args[i] == NULL)
-                break;
-            if(i == 0)
-                sprintf(event_desc + strlen(event_desc), "%s", file_arguments.h_args[i]);
-            else
-                sprintf(event_desc + strlen(event_desc), ",%s", file_arguments.h_args[i]);
-        }
-    }
-
-    write_to_logfile(write_logfile, logfile, times(NULL), getpid(), COMMAND, event_desc);
 
     //Read File Type
     char *file_name = malloc(255 * sizeof(char));
@@ -230,7 +232,7 @@ int process_data(fore_args file_arguments)
         write(STDOUT_FILENO, info_to_write, strlen(info_to_write));
 
     int status = remove(file_name);
-<<<<<<< HEAD
+
     if(status!=0){
         perror("remove");
     }
