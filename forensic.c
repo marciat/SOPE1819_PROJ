@@ -110,5 +110,8 @@ int forensic(fore_args arguments)//, char *originalDirectory)
         }
     }
 
+    
+    //free_arguments(&arguments);
+
     return 0;
 }

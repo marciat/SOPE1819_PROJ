@@ -35,12 +35,12 @@ int process_data(fore_args file_arguments)
         }
     }
 
-
     //Read File Type
-    char* file_name = malloc(255*sizeof(char));
-    sprintf(file_name, "%s.txt", file_arguments.f_or_dir);
-    for(size_t i = 0; i < strlen(file_name); i++){
-        if(file_name[i] == '/')
+    char *file_name = malloc(255 * sizeof(char));
+    sprintf(file_name, "f%s.txt", file_arguments.f_or_dir);
+    for (size_t i = 0; i < strlen(file_name); i++)
+    {
+        if (file_name[i] == '/')
             file_name[i] = '_';
     }
 
@@ -155,13 +155,15 @@ int process_data(fore_args file_arguments)
                 char *tmp_string = malloc(25 * sizeof(char));
                 sprintf(h_string, "%ssum %s > %s", file_arguments.h_args[i], file_arguments.f_or_dir, file_name);
                 system(h_string);
-                free(h_string);
-                h_string = malloc(255 * sizeof(char));
+                memset(h_string, '\0', 255 * sizeof(char));
                 fgets(h_string, 255, fp);
                 sscanf(h_string, "%s %s", h_string, tmp_string);
                 sprintf(info_to_write + strlen(info_to_write), ",%s", h_string);
+                printf("1\n");
                 free(h_string);
+                printf("2\n");
                 free(tmp_string);
+                printf("3\n");
                 fclose(fp);
                 close(fd1);
             }
@@ -187,7 +189,6 @@ int process_data(fore_args file_arguments)
 
     free(info_to_write);
     free(file_string);
-    free(file_name);
-
+    //free(file_name);
     return 0;
 }

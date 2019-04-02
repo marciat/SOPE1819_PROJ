@@ -43,7 +43,7 @@ fore_args parse_data(int argc, char *argv[], char *envp[])
             i++;
 
             char *h_arg = (char *)malloc(20);
-            memset(h_arg,'\0',20);
+            memset(h_arg, '\0', 20);
             char *auxiliar_string;
 
             auxiliar_string = strstr(argv[i], "md5");
@@ -53,10 +53,10 @@ fore_args parse_data(int argc, char *argv[], char *envp[])
             }
             else
             {
-                memset(h_arg,'\0',20);
+                memset(h_arg, '\0', 20);
             }
 
-            if (h_arg[0]!= '\0')
+            if (h_arg[0] != '\0')
             {
                 if (h_arg[3] != ',' && h_arg[3] != '\0')
                 {
@@ -67,7 +67,7 @@ fore_args parse_data(int argc, char *argv[], char *envp[])
                 args.h_args[0] = "md5";
             }
 
-            memset(h_arg,'\0',20);
+            memset(h_arg, '\0', 20);
 
             auxiliar_string = strstr(argv[i], "sha1");
             if (auxiliar_string != NULL)
@@ -76,10 +76,10 @@ fore_args parse_data(int argc, char *argv[], char *envp[])
             }
             else
             {
-                memset(h_arg,'\0',20);
+                memset(h_arg, '\0', 20);
             }
 
-            if (h_arg[0]!= '\0')
+            if (h_arg[0] != '\0')
             {
                 if (h_arg[4] != ',' && h_arg[4] != '\0')
                 {
@@ -97,7 +97,7 @@ fore_args parse_data(int argc, char *argv[], char *envp[])
                 }
             }
 
-            memset(h_arg,'\0',20);
+            memset(h_arg, '\0', 20);
 
             auxiliar_string = strstr(argv[i], "sha256");
             if (auxiliar_string != NULL)
@@ -106,10 +106,10 @@ fore_args parse_data(int argc, char *argv[], char *envp[])
             }
             else
             {
-                memset(h_arg,'\0',20);
+                memset(h_arg, '\0', 20);
             }
 
-            if (h_arg[0]!= '\0')
+            if (h_arg[0] != '\0')
             {
                 if (h_arg[6] != ',' && h_arg[6] != '\0')
                 {
@@ -142,7 +142,8 @@ fore_args parse_data(int argc, char *argv[], char *envp[])
         {
             args.arg_o = true;
             i++;
-            if(strcmp(argv[i], argv[argc-1]) == 0 || (strcmp(argv[i], "-v")) == 0){
+            if (strcmp(argv[i], argv[argc - 1]) == 0 || (strcmp(argv[i], "-v")) == 0)
+            {
                 break;
             }
             args.outfile = argv[i];
@@ -176,4 +177,25 @@ char *get_filename_var(char *envp[])
     logfilename = (char *)malloc(25 * sizeof(char));
     sprintf(logfilename, "%s", envp[i] + 5);
     return logfilename;
+}
+
+void free_arguments(fore_args *arguments)
+{
+    if (arguments->f_or_dir != NULL)
+        free(arguments->f_or_dir);
+    for (int i = 0; i < 3; i++)
+    {
+        if (arguments->h_args != NULL)
+        {
+            free(arguments->h_args[i]);
+        }
+        else
+        {
+            break;
+        }
+    }
+    if (arguments->logfilename != NULL)
+        free(arguments->logfilename);
+    if (arguments->outfile != NULL)
+        free(arguments->outfile);
 }
