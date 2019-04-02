@@ -12,8 +12,14 @@
 #include <errno.h>
 #include <time.h>
 #include <dirent.h>
+#include <signal.h>
 
 #include "forensic.h"
+
+void sigint_handler(int signo)
+{
+    printf("In SIGINT handler ...\n");
+}
 
 int main(int argc, char *argv[], char *envp[])
 {
@@ -30,23 +36,31 @@ int main(int argc, char *argv[], char *envp[])
         return 1;
     }
 
+    __sighandler_t old_handler;
+    if ((old_handler = signal(SIGINT, sigint_handler)) < 0)
+    {
+        perror("signal");
+        exit(1);
+    }
+
     fore_args arguments = parse_data(argc, argv, envp);
 
     //char *originalDirectory = malloc(strlen(argv[argc - 1]));
     //strcpy(originalDirectory, argv[argc - 1]);
 
-    if (forensic(arguments))//, originalDirectory))
+    if (forensic(arguments)) //, originalDirectory))
         return 1;
 
     //free(originalDirectory);
-    
+
     free_arguments(&arguments);
 
+    signal(SIGINT, old_handler);
 
     return 0;
 }
 
-int forensic(fore_args arguments)//, char *originalDirectory)
+int forensic(fore_args arguments) //, char *originalDirectory)
 {
     struct stat directory_stat;
     if ((stat(arguments.f_or_dir, &directory_stat) >= 0) && S_ISDIR(directory_stat.st_mode)) //Found directory
@@ -76,7 +90,7 @@ int forensic(fore_args arguments)//, char *originalDirectory)
                         {
                             strcpy(arguments.f_or_dir, new_name); //New directory name
 
-                            if (forensic(arguments))//, originalDirectory))
+                            if (forensic(arguments)) //, originalDirectory))
                                 return 1;
                             break;
                         }
@@ -84,7 +98,7 @@ int forensic(fore_args arguments)//, char *originalDirectory)
                 }
                 else //File in directory
                 {
-                    char* tmp_f_or_dir = malloc(sizeof(arguments.f_or_dir));
+                    char *tmp_f_or_dir = malloc(sizeof(arguments.f_or_dir));
                     strcpy(tmp_f_or_dir, arguments.f_or_dir);
                     strcpy(arguments.f_or_dir, new_name); //New file name
 
@@ -94,7 +108,7 @@ int forensic(fore_args arguments)//, char *originalDirectory)
                         exit(1);
                     }
 
-                    strcpy(arguments.f_or_dir,tmp_f_or_dir);
+                    strcpy(arguments.f_or_dir, tmp_f_or_dir);
                     free(tmp_f_or_dir);
                 }
 
