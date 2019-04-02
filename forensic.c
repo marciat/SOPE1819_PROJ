@@ -75,7 +75,7 @@ int forensic(fore_args arguments) //, char *originalDirectory)
                 if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0)
                     continue;
 
-                char *new_name = malloc(sizeof(arguments.f_or_dir) + sizeof(ent->d_name) + 1);
+                char *new_name = malloc(strlen(arguments.f_or_dir) + sizeof(ent->d_name) + 1);
                 sprintf(new_name, "%s/%s", arguments.f_or_dir, ent->d_name);
 
                 if (stat(new_name, &directory_stat) != 0)
@@ -99,7 +99,7 @@ int forensic(fore_args arguments) //, char *originalDirectory)
                 }
                 else //File in directory
                 {
-                    char *tmp_f_or_dir = malloc(sizeof(arguments.f_or_dir));
+                    char *tmp_f_or_dir = malloc(strlen(arguments.f_or_dir));
                     strcpy(tmp_f_or_dir, arguments.f_or_dir);
                     strcpy(arguments.f_or_dir, new_name); //New file name
 

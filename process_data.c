@@ -112,7 +112,7 @@ int process_data(fore_args file_arguments)
     char *file_string = malloc(255 * sizeof(char));
     sprintf(file_string, "file %s > %s", file_arguments.f_or_dir, file_name);
     system(file_string);
-    memset(file_string, '\0', sizeof(file_string) * sizeof(char));
+    memset(file_string, '\0', strlen(file_string) * sizeof(char));
     fgets(file_string, 255, fp);
     fclose(fp);
     close(fd1);
@@ -211,7 +211,6 @@ int process_data(fore_args file_arguments)
                 sscanf(h_string, "%s %s", h_string, tmp_string);
                 sprintf(info_to_write + strlen(info_to_write), ",%s", h_string);
                 free(h_string);
-
                 free(tmp_string);
                 fclose(fp);
                 close(fd1);
@@ -231,12 +230,12 @@ int process_data(fore_args file_arguments)
         write(STDOUT_FILENO, info_to_write, strlen(info_to_write));
 
     int status = remove(file_name);
+<<<<<<< HEAD
     if(status!=0){
         perror("remove");
     }
 
     free(info_to_write);
-    free(file_string);
     //free(file_name);
     return 0;
 }
