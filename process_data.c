@@ -18,8 +18,8 @@
 
 int process_data(fore_args file_arguments)
 {
-    clock_t start, event;
-    long ticks;
+    /*clock_t start, event;
+    long ticks;*/
 
     if (file_arguments.arg_h)
     {
@@ -47,8 +47,8 @@ int process_data(fore_args file_arguments)
             exit(1);
         }
     }
-    start = times(&t);
-    ticks = sysconf(_SC_CLK_TCK);
+    /*start = times(&t);
+    ticks = sysconf(_SC_CLK_TCK);*/
 
     //Read File Type
     char *file_name = malloc(255 * sizeof(char));

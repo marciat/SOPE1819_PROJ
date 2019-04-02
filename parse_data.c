@@ -169,13 +169,20 @@ char *get_filename_var(char *envp[])
     while (envp[i] != NULL)
     {
         if (strncmp("LOGFILENAME=", envp[i], 12) == 0)
-            break;
+        {
+            char *logfilename;
+            logfilename = (char *)malloc(25 * sizeof(char));
+            sprintf(logfilename, "%s", envp[i] + 5);
+            return logfilename;
+        }
 
         i++;
     }
-    char *logfilename;
-    logfilename = (char *)malloc(25 * sizeof(char));
-    sprintf(logfilename, "%s", envp[i] + 5);
+    
+    //If the LOGFILENAME variable doesn't exist, create new file for logs
+    char*logfilename = (char*)malloc(9*sizeof(char));
+    sprintf(logfilename, "logs.txt");
+
     return logfilename;
 }
 
