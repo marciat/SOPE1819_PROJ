@@ -15,7 +15,7 @@
 
 #include "forensic.h"
 
-void write_to_logfile(int logfile, clock_t inst, pid_t pid, enum evt_type event, char* description){
+void write_to_logfile(int logfile, double inst, pid_t pid, enum evt_type event, char* description){
 
     char *evt_name = malloc(9 * sizeof(char));
     switch(event){
@@ -29,18 +29,18 @@ void write_to_logfile(int logfile, clock_t inst, pid_t pid, enum evt_type event,
                  break;
     }
     char *info = malloc(500 * sizeof(char));
-    sprintf(info, "%.2f - %8d - %s %s\n", (double)inst*1000.0/CLOCKS_PER_SEC, pid, evt_name, description);
+    sprintf(info, "%.2f - %8d - %s %s\n", inst, pid, evt_name, description);
     write(logfile, info, strlen(info));
     free(info);
 }
 
-int process_data(fore_args file_arguments, clock_t start)
+int process_data(fore_args file_arguments, struct timespec start)
 {
     if(sigint_actived){ //Pressed CTRL+C -> exit
         exit(1);
     }
 
-    clock_t event;
+    struct timespec event;
     
     bool write_logfile = false;
     char* event_desc = malloc(500 * sizeof(char));
@@ -253,8 +253,8 @@ int process_data(fore_args file_arguments, clock_t start)
             perror("open");
             exit(-1);
         }
-        event = clock();
-        write_to_logfile(logfile, (event-start), getpid(), ANALIZED, file_arguments.f_or_dir);
+        clock_gettime(CLOCK_MONOTONIC, &event);
+        write_to_logfile(logfile, (double)(event.tv_nsec-start.tv_nsec)/1000000000.0+(double)(event.tv_sec - start.tv_sec), getpid(), ANALIZED, file_arguments.f_or_dir);
     }
     
     free(file_name);

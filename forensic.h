@@ -16,7 +16,7 @@ typedef struct
     char *f_or_dir;    //File or directory to be evaluated
 } fore_args;
 
-int forensic(fore_args arguments, clock_t start);
+int forensic(fore_args arguments, struct timespec start);
 
 fore_args parse_data(int argc, char *argv[], char *envp[]);
 
@@ -24,11 +24,11 @@ char* get_filename_var();
 
 void remove_newline(char* string);
 
-int process_data(fore_args file_arguments, clock_t start);
+int process_data(fore_args file_arguments, struct timespec start);
 
 void free_arguments(fore_args *arguments);  
 
-void write_to_logfile(int logfile, clock_t inst, pid_t pid, enum evt_type event, char* description); 
+void write_to_logfile(int logfile, double inst, pid_t pid, enum evt_type event, char* description); 
 
 extern bool sigint_actived;
 
