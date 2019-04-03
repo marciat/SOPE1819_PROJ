@@ -25,7 +25,8 @@ void sigint_handler(int signo)
 
 int main(int argc, char *argv[], char *envp[])
 {
-	clock_t start = clock();
+    struct timespec start;
+    clock_gettime(CLOCK_MONOTONIC, &start);
     setbuf(stdout, NULL);
 
     if (argc < 2)
@@ -55,7 +56,7 @@ int main(int argc, char *argv[], char *envp[])
     //strcpy(originalDirectory, argv[argc - 1]);
 
 	if(arguments.arg_v){
-	    clock_t event;
+        struct timespec event;
     
 	    char* event_desc = malloc(500 * sizeof(char));
 
@@ -92,8 +93,8 @@ int main(int argc, char *argv[], char *envp[])
  	    	exit(-1);
  	   	}
 
-	    event = clock();
-    	write_to_logfile(logfile, (event-start), getpid(), COMMAND, event_desc);
+        clock_gettime(CLOCK_MONOTONIC, &event);
+    	write_to_logfile(logfile, (double)(event.tv_nsec-start.tv_nsec)/1000000000.0+(double)(event.tv_sec - start.tv_sec), getpid(), COMMAND, event_desc);
     	free(event_desc);
     	close(logfile);
 	}
@@ -108,7 +109,7 @@ int main(int argc, char *argv[], char *envp[])
     return 0;
 }
 
-int forensic(fore_args arguments, clock_t start) //, char *originalDirectory)
+int forensic(fore_args arguments, struct timespec start) //, char *originalDirectory)
 {
     struct stat directory_stat;
     if ((stat(arguments.f_or_dir, &directory_stat) >= 0) && S_ISDIR(directory_stat.st_mode)) //Found directory
