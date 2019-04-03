@@ -29,7 +29,7 @@ void write_to_logfile(int logfile, clock_t inst, pid_t pid, enum evt_type event,
                  break;
     }
     char *info = malloc(500 * sizeof(char));
-    sprintf(info, "%.2f - %8d - %s %s", (double)inst*1000.0/CLOCKS_PER_SEC, pid, evt_name, description);
+    sprintf(info, "%.2f - %8d - %s %s\n", (double)inst*1000.0/CLOCKS_PER_SEC, pid, evt_name, description);
     write(logfile, info, strlen(info));
     free(info);
 }
@@ -72,13 +72,6 @@ int process_data(fore_args file_arguments, clock_t start)
             printf("LOGFILENAME variable not defined!!!\n");
             exit(1);
         }
-    }
-
-    int logfile = open(file_arguments.logfilename, O_RDWR | O_CREAT | O_APPEND, 0777);
-    if(logfile < 0)
-    {
-        perror("open");
-        exit(-1);
     }
 
 
@@ -232,7 +225,18 @@ int process_data(fore_args file_arguments, clock_t start)
     }
 
     free(info_to_write);
-    
+
+    if(file_arguments.arg_v){
+
+        int logfile = open(file_arguments.logfilename, O_RDWR | O_CREAT | O_APPEND, 0777);
+        if(logfile < 0)
+        {
+            perror("open");
+            exit(-1);
+        }
+        event = clock();
+        write_to_logfile(logfile, (event-start), getpid(), ANALIZED, file_arguments.f_or_dir);
+    }
     //free(file_name);
     return 0;
 }

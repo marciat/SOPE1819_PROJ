@@ -75,7 +75,7 @@ int main(int argc, char *argv[], char *envp[])
 	        sprintf(event_desc + strlen(event_desc), "%s", arguments.outfile);
 	    sprintf(event_desc + strlen(event_desc), " -v ");
 	    if(arguments.f_or_dir)
-	        sprintf(event_desc + strlen(event_desc), "%s\n", arguments.f_or_dir);
+	        sprintf(event_desc + strlen(event_desc), "%s", arguments.f_or_dir);
  	    if(arguments.logfilename == NULL)
 	    {
  	    	printf("LOGFILENAME variable not defined!!!\n");
