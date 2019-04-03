@@ -1,5 +1,8 @@
 // Header file that declares every function and data structure used in the main function of forensic
+#ifndef _FORENSIC_H
+#define _FORENSIC_H
 
+#include "logfileinfo.h"
 typedef struct
 {
     bool arg_r;        //Option -r of forensic program
@@ -20,6 +23,10 @@ char* get_filename_var();
 
 void remove_newline(char* string);
 
-int process_data(fore_args file_arguments);
+int process_data(fore_args file_arguments, clock_t start);
 
-void free_arguments(fore_args *arguments);   
+void free_arguments(fore_args *arguments);  
+
+void write_to_logfile(bool write_logfile, int logfile, clock_t inst, pid_t pid, enum evt_type event, char* description); 
+
+#endif

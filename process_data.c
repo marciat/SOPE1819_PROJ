@@ -14,43 +14,38 @@
 #include <dirent.h>
 
 #include "forensic.h"
-#include "logfileinfo.h"
 
 void write_to_logfile(bool write_logfile, int logfile, clock_t inst, pid_t pid, enum evt_type event, char* description){
-    char *info = malloc(500 * sizeof(char));
-    //long ticks = sysconf(_SC_CLK_TCK);
     if(!write_logfile)
         return;
-    sprintf(info, "%.2f - %d - %s %s", (double)inst*1000.0/CLOCKS_PER_SEC, pid, evt_names[event], description);
+    char *evt_name = malloc(9 * sizeof(char));
+    switch(event){
+        case COMMAND: evt_name = "COMMAND";
+                      break;
+        case ANALIZED: evt_name = "ANALIZED";
+                       break;
+        case SIGNAL: evt_name = "SIGNAL";
+                     break;
+        default: evt_name = "EVENT";
+                 break;
+    }
+    char *info = malloc(500 * sizeof(char));
+    sprintf(info, "%.2f - %d - %s %s", (double)inst*1000.0/CLOCKS_PER_SEC, pid, evt_name, description);
     write(logfile, info, strlen(info));
     free(info);
 }
 
-int process_data(fore_args file_arguments)
+int process_data(fore_args file_arguments, clock_t start)
 {
-    clock_t start = clock();
     clock_t event;
     
     bool write_logfile = false;
     char* event_desc = malloc(500 * sizeof(char));
 
-    sprintf(event_desc, "forensic ");
-    if(file_arguments.arg_r)
-        sprintf(event_desc + strlen(event_desc), "-r ");
-    if(file_arguments.arg_h){
-        sprintf(event_desc + strlen(event_desc), "-h ");
-        for(int i=0; i<3; i++){
-            if(file_arguments.h_args[i] == NULL)
-                break;
-            if(i == 0)
-                sprintf(event_desc + strlen(event_desc), "%s", file_arguments.h_args[i]);
-            else
-                sprintf(event_desc + strlen(event_desc), ",%s", file_arguments.h_args[i]);
-        }
-    }
-
-    event = clock();
-    write_to_logfile(write_logfile, logfile, (event-start), getpid(), COMMAND, event_desc);
+    (void)event;
+    (void)write_logfile;
+    (void)event_desc;
+    (void)start;
 
     if (file_arguments.arg_h)
     {

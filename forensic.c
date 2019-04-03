@@ -63,6 +63,52 @@ int main(int argc, char *argv[], char *envp[])
 
 int forensic(fore_args arguments) //, char *originalDirectory)
 {
+	clock_t start = clock();
+	if(arguments.arg_v){
+	    clock_t event;
+    
+	    char* event_desc = malloc(500 * sizeof(char));
+
+	    sprintf(event_desc, "forensic ");
+	    if(arguments.arg_r)
+	        sprintf(event_desc + strlen(event_desc), "-r ");
+	    if(arguments.arg_h){
+	        sprintf(event_desc + strlen(event_desc), "-h ");
+	        for(int i=0; i<3; i++){
+	            if(arguments.h_args[i] == NULL)
+	                break;
+	            if(i == 0)
+	                sprintf(event_desc + strlen(event_desc), "%s", arguments.h_args[i]);
+	            else
+	                sprintf(event_desc + strlen(event_desc), ",%s", arguments.h_args[i]);
+	        }
+	    }
+	    if(arguments.arg_o)
+	        sprintf(event_desc + strlen(event_desc), " -o ");
+	    if(arguments.outfile != NULL)
+	        sprintf(event_desc + strlen(event_desc), "%s", arguments.outfile);
+	    sprintf(event_desc + strlen(event_desc), " -v ");
+	    if(arguments.f_or_dir)
+	        sprintf(event_desc + strlen(event_desc), "%s\n", arguments.f_or_dir);
+ 	    if(arguments.logfilename == NULL)
+	    {
+ 	    	printf("LOGFILENAME variable not defined!!!\n");
+	        exit(1);
+	    }
+    	int logfile = open(arguments.logfilename, O_RDWR | O_CREAT | O_APPEND, 0777);
+    	if(logfile < 0)
+		{
+    		perror("open");
+ 	    	exit(-1);
+ 	   	}
+
+	    event = clock();
+    	write_to_logfile(true, logfile, (event-start), getpid(), COMMAND, event_desc);
+    	free(event_desc);
+    	close(logfile);
+	}
+
+
     struct stat directory_stat;
     if ((stat(arguments.f_or_dir, &directory_stat) >= 0) && S_ISDIR(directory_stat.st_mode)) //Found directory
     {
@@ -103,7 +149,7 @@ int forensic(fore_args arguments) //, char *originalDirectory)
                     strcpy(tmp_f_or_dir, arguments.f_or_dir);
                     strcpy(arguments.f_or_dir, new_name); //New file name
 
-                    if (process_data(arguments)) //Calling process_data for the new file
+                    if (process_data(arguments, start)) //Calling process_data for the new file
                     {
                         printf("ERROR!!!");
                         exit(1);
@@ -121,7 +167,7 @@ int forensic(fore_args arguments) //, char *originalDirectory)
     }
     else //Found file
     {
-        if (process_data(arguments)) //Process data for just one file
+        if (process_data(arguments,start)) //Process data for just one file
         {
             printf("ERROR!!!");
             exit(1);

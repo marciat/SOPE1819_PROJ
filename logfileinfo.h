@@ -1,3 +1,6 @@
+#ifndef _LOGFILEINFO_H
+#define _LOGFILEINFO_H
+
 enum evt_type {COMMAND, ANALIZED, SIGNAL};
 
-const char* evt_names[] = {"COMMAND", "ANALIZED", "SIGNAL"};
+#endif
