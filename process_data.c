@@ -36,6 +36,10 @@ void write_to_logfile(int logfile, clock_t inst, pid_t pid, enum evt_type event,
 
 int process_data(fore_args file_arguments, clock_t start)
 {
+    if(sigint_actived){ //Pressed CTRL+C -> exit
+        exit(1);
+    }
+
     clock_t event;
     
     bool write_logfile = false;
@@ -74,6 +78,9 @@ int process_data(fore_args file_arguments, clock_t start)
         }
     }
 
+    if(sigint_actived){ //Pressed CTRL+C -> exit
+        exit(1);
+    }
 
     //Read File Type
     char *file_name = malloc(255 * sizeof(char));
@@ -190,7 +197,15 @@ int process_data(fore_args file_arguments, clock_t start)
             if (file_arguments.h_args[i] != NULL)
             {
                 fd1 = open(file_name, O_RDWR, 0777);
+                if(fd1 < 0){
+                    perror("open");
+                    exit(1);
+                }
                 fp = fdopen(fd1, "r");
+                if(fp == NULL){
+                    perror("fdopen");
+                    exit(1);
+                }
                 char *h_string = malloc(255 * sizeof(char));
                 char *tmp_string = malloc(25 * sizeof(char));
                 sprintf(h_string, "%ssum %s > %s", file_arguments.h_args[i], file_arguments.f_or_dir, file_name);
@@ -213,6 +228,10 @@ int process_data(fore_args file_arguments, clock_t start)
     if (file_arguments.arg_o)
     {
         int fd_o = open(file_arguments.outfile, O_RDWR | O_CREAT | O_APPEND, 0777);
+        if(fd_o < 0){
+            perror("open");
+            exit(1);
+        }
         write(fd_o, info_to_write, strlen(info_to_write));
     }
     else
@@ -237,6 +256,12 @@ int process_data(fore_args file_arguments, clock_t start)
         event = clock();
         write_to_logfile(logfile, (event-start), getpid(), ANALIZED, file_arguments.f_or_dir);
     }
-    //free(file_name);
+    
+    free(file_name);
+    
+    if(sigint_actived){ //Pressed CTRL+C -> exit
+        exit(1);
+    }
+
     return 0;
 }

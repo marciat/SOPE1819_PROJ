@@ -16,11 +16,12 @@
 
 #include "forensic.h"
 
+bool sigint_actived = false;
+
 void sigint_handler(int signo)
 {
-    printf("In SIGINT handler ...\n");
-    (void)signo;
-    system("pause");
+    sigint_actived = true;
+    printf("Actived signal %d \n", signo);
 }
 
 int main(int argc, char *argv[], char *envp[])
@@ -42,17 +43,22 @@ int main(int argc, char *argv[], char *envp[])
     struct sigaction action;
     action.sa_handler = sigint_handler;
     sigemptyset(&action.sa_mask);
-    action.sa_flags = 0;
+    action.sa_flags = SA_RESTART;
     if (sigaction(SIGINT, &action, NULL) < 0)
     {
         perror("sigaction");
         exit(1);
     }
 
+    if(sigint_actived){ //Pressed CTRL+C -> exit
+        exit(1);
+    }
+
     fore_args arguments = parse_data(argc, argv, envp);
 
-    //char *originalDirectory = malloc(strlen(argv[argc - 1]));
-    //strcpy(originalDirectory, argv[argc - 1]);
+    if(sigint_actived){ //Pressed CTRL+C -> exit
+        exit(1);
+    }
 
 	if(arguments.arg_v){
 	    clock_t event;
@@ -98,18 +104,28 @@ int main(int argc, char *argv[], char *envp[])
     	close(logfile);
 	}
 
-    if (forensic(arguments, start)) //, originalDirectory))
+    if(sigint_actived){ //Pressed CTRL+C -> exit
+        exit(1);
+    }
+
+    if (forensic(arguments, start))
         return 1;
-
-    //free(originalDirectory);
-
+    
     free_arguments(&arguments);
+
+    if(sigint_actived){ //Pressed CTRL+C -> exit
+        exit(1);
+    }
 
     return 0;
 }
 
-int forensic(fore_args arguments, clock_t start) //, char *originalDirectory)
+int forensic(fore_args arguments, clock_t start)
 {
+    if(sigint_actived){ //Pressed CTRL+C -> exit
+        exit(1);
+    }
+
     struct stat directory_stat;
     if ((stat(arguments.f_or_dir, &directory_stat) >= 0) && S_ISDIR(directory_stat.st_mode)) //Found directory
     {
@@ -118,7 +134,11 @@ int forensic(fore_args arguments, clock_t start) //, char *originalDirectory)
         if ((dir = opendir(arguments.f_or_dir)) != NULL)
         {
             while ((ent = readdir(dir)) != NULL)
-            {
+            {   
+                if(sigint_actived){ //Pressed CTRL+C -> exit
+                    exit(1);
+                }
+
                 if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0)
                     continue;
 
@@ -160,6 +180,10 @@ int forensic(fore_args arguments, clock_t start) //, char *originalDirectory)
                     free(tmp_f_or_dir);
                 }
 
+                if(sigint_actived){ //Pressed CTRL+C -> exit
+                    exit(1);
+                }
+
                 free(new_name);
             }
 
@@ -173,6 +197,10 @@ int forensic(fore_args arguments, clock_t start) //, char *originalDirectory)
             printf("ERROR!!!");
             exit(1);
         }
+    }
+
+    if(sigint_actived){ //Pressed CTRL+C -> exit
+        exit(1);
     }
 
     return 0;

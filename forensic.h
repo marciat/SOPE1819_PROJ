@@ -3,6 +3,7 @@
 #define _FORENSIC_H
 
 #include "logfileinfo.h"
+
 typedef struct
 {
     bool arg_r;        //Option -r of forensic program
@@ -15,7 +16,7 @@ typedef struct
     char *f_or_dir;    //File or directory to be evaluated
 } fore_args;
 
-int forensic(fore_args arguments, clock_t start);//, char *originalDirectory);
+int forensic(fore_args arguments, clock_t start);
 
 fore_args parse_data(int argc, char *argv[], char *envp[]);
 
@@ -28,5 +29,7 @@ int process_data(fore_args file_arguments, clock_t start);
 void free_arguments(fore_args *arguments);  
 
 void write_to_logfile(int logfile, clock_t inst, pid_t pid, enum evt_type event, char* description); 
+
+extern bool sigint_actived;
 
 #endif
