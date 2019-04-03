@@ -20,6 +20,7 @@ void sigint_handler(int signo)
 {
     printf("In SIGINT handler ...\n");
     (void)signo;
+    system("pause");
 }
 
 int main(int argc, char *argv[], char *envp[])
@@ -38,10 +39,13 @@ int main(int argc, char *argv[], char *envp[])
         return 1;
     }
 
-    __sighandler_t old_handler;
-    if ((old_handler = signal(SIGINT, sigint_handler)) == SIG_ERR)
+    struct sigaction action;
+    action.sa_handler = sigint_handler;
+    sigemptyset(&action.sa_mask);
+    action.sa_flags = 0;
+    if (sigaction(SIGINT, &action, NULL) < 0)
     {
-        perror("signal");
+        perror("sigaction");
         exit(1);
     }
 
@@ -100,8 +104,6 @@ int main(int argc, char *argv[], char *envp[])
     //free(originalDirectory);
 
     free_arguments(&arguments);
-
-    signal(SIGINT, old_handler);
 
     return 0;
 }
