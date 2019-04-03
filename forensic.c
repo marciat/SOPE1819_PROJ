@@ -25,6 +25,7 @@ void sigint_handler(int signo)
 
 int main(int argc, char *argv[], char *envp[])
 {
+	clock_t start = clock();
     setbuf(stdout, NULL);
 
     if (argc < 2)
@@ -53,19 +54,6 @@ int main(int argc, char *argv[], char *envp[])
     //char *originalDirectory = malloc(strlen(argv[argc - 1]));
     //strcpy(originalDirectory, argv[argc - 1]);
 
-    if (forensic(arguments)) //, originalDirectory))
-        return 1;
-
-    //free(originalDirectory);
-
-    free_arguments(&arguments);
-
-    return 0;
-}
-
-int forensic(fore_args arguments) //, char *originalDirectory)
-{
-	clock_t start = clock();
 	if(arguments.arg_v){
 	    clock_t event;
     
@@ -105,12 +93,23 @@ int forensic(fore_args arguments) //, char *originalDirectory)
  	   	}
 
 	    event = clock();
-    	write_to_logfile(true, logfile, (event-start), getpid(), COMMAND, event_desc);
+    	write_to_logfile(logfile, (event-start), getpid(), COMMAND, event_desc);
     	free(event_desc);
     	close(logfile);
 	}
 
+    if (forensic(arguments, start)) //, originalDirectory))
+        return 1;
 
+    //free(originalDirectory);
+
+    free_arguments(&arguments);
+
+    return 0;
+}
+
+int forensic(fore_args arguments, clock_t start) //, char *originalDirectory)
+{
     struct stat directory_stat;
     if ((stat(arguments.f_or_dir, &directory_stat) >= 0) && S_ISDIR(directory_stat.st_mode)) //Found directory
     {
@@ -139,7 +138,7 @@ int forensic(fore_args arguments) //, char *originalDirectory)
                         {
                             strcpy(arguments.f_or_dir, new_name); //New directory name
 
-                            if (forensic(arguments)) //, originalDirectory))
+                            if (forensic(arguments, start)) //, originalDirectory))
                                 return 1;
                             break;
                         }
