@@ -15,9 +15,8 @@
 
 #include "forensic.h"
 
-void write_to_logfile(bool write_logfile, int logfile, clock_t inst, pid_t pid, enum evt_type event, char* description){
-    if(!write_logfile)
-        return;
+void write_to_logfile(int logfile, clock_t inst, pid_t pid, enum evt_type event, char* description){
+
     char *evt_name = malloc(9 * sizeof(char));
     switch(event){
         case COMMAND: evt_name = "COMMAND";
@@ -30,7 +29,7 @@ void write_to_logfile(bool write_logfile, int logfile, clock_t inst, pid_t pid, 
                  break;
     }
     char *info = malloc(500 * sizeof(char));
-    sprintf(info, "%.2f - %d - %s %s", (double)inst*1000.0/CLOCKS_PER_SEC, pid, evt_name, description);
+    sprintf(info, "%.2f - %8d - %s %s", (double)inst*1000.0/CLOCKS_PER_SEC, pid, evt_name, description);
     write(logfile, info, strlen(info));
     free(info);
 }
@@ -233,6 +232,7 @@ int process_data(fore_args file_arguments, clock_t start)
     }
 
     free(info_to_write);
+    
     //free(file_name);
     return 0;
 }

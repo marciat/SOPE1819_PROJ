@@ -15,7 +15,7 @@ typedef struct
     char *f_or_dir;    //File or directory to be evaluated
 } fore_args;
 
-int forensic(fore_args arguments);//, char *originalDirectory);
+int forensic(fore_args arguments, clock_t start);//, char *originalDirectory);
 
 fore_args parse_data(int argc, char *argv[], char *envp[]);
 
@@ -27,6 +27,6 @@ int process_data(fore_args file_arguments, clock_t start);
 
 void free_arguments(fore_args *arguments);  
 
-void write_to_logfile(bool write_logfile, int logfile, clock_t inst, pid_t pid, enum evt_type event, char* description); 
+void write_to_logfile(int logfile, clock_t inst, pid_t pid, enum evt_type event, char* description); 
 
 #endif
