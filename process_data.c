@@ -43,7 +43,7 @@ void write_to_logfile(int logfile, double inst, pid_t pid, enum evt_type event, 
     free(evt_name);
 }
 
-int process_data(fore_args file_arguments, struct timespec start)
+int process_data(fore_args *file_arguments, struct timespec start)
 {
     if (sigint_activated) //Pressed CTRL+C -> exit
     { 
@@ -52,27 +52,27 @@ int process_data(fore_args file_arguments, struct timespec start)
 
     struct timespec event;
 
-    if (file_arguments.arg_h)
+    if (file_arguments->arg_h)
     {
-        if (file_arguments.h_args[0] == NULL)
+        if (file_arguments->h_args[0] == NULL)
         {
             printf("-h flag requires arguments!!!\n");
             exit(1);
         }
     }
 
-    if (file_arguments.arg_o)
+    if (file_arguments->arg_o)
     {
-        if (file_arguments.outfile == NULL)
+        if (file_arguments->outfile == NULL)
         {
             printf("-o flag requires an argument!!!\n");
             exit(1);
         }
     }
 
-    if (file_arguments.arg_v)
+    if (file_arguments->arg_v)
     {
-        if (file_arguments.logfilename == NULL)
+        if (file_arguments->logfilename == NULL)
         {
             printf("LOGFILENAME variable not defined!!!\n");
             exit(1);
@@ -85,8 +85,8 @@ int process_data(fore_args file_arguments, struct timespec start)
     }
 
     //Read File Type
-    char *file_name = malloc(255 * sizeof(char));
-    sprintf(file_name, "f%s.txt", file_arguments.f_or_dir);
+    char *file_name = malloc(500 * sizeof(char));
+    sprintf(file_name, "f%s.txt", file_arguments->f_or_dir);
     for (size_t i = 0; i < strlen(file_name); i++)
     {
         if (file_name[i] == '/')
@@ -107,8 +107,8 @@ int process_data(fore_args file_arguments, struct timespec start)
         exit(-1);
     }
 
-    char *file_string = malloc(255 * sizeof(char));
-    sprintf(file_string, "file %s > %s", file_arguments.f_or_dir, file_name);
+    char *file_string = malloc(500 * sizeof(char));
+    sprintf(file_string, "file %s > %s", file_arguments->f_or_dir, file_name);
     system(file_string);
     memset(file_string, '\0', strlen(file_string) * sizeof(char));
     fgets(file_string, 255, fp);
@@ -121,9 +121,9 @@ int process_data(fore_args file_arguments, struct timespec start)
     file_string_result[file_string_len - 1] = '\0';
 
     //Read File Data
-    char *path_string = malloc(255 * sizeof(char));
+    char *path_string = malloc(500 * sizeof(char));
     struct stat statbuf;
-    sprintf(path_string, "%s", file_arguments.f_or_dir);
+    sprintf(path_string, "%s", file_arguments->f_or_dir);
     if (stat(path_string, &statbuf) < 0)
     {
         exit(1);
@@ -190,16 +190,16 @@ int process_data(fore_args file_arguments, struct timespec start)
 
     char *info_to_write = malloc(1000 * sizeof(char));
 
-    sprintf(info_to_write, "%s,%s,%d,%s,%s,%s", file_arguments.f_or_dir, file_string_result, file_size, file_access_owner, accessDate, modificationDate);
+    sprintf(info_to_write, "%s,%s,%d,%s,%s,%s", file_arguments->f_or_dir, file_string_result, file_size, file_access_owner, accessDate, modificationDate);
 
     free(file_string);
 
     //Calculate file fingerprints
-    if (file_arguments.arg_h)
+    if (file_arguments->arg_h)
     {
         for (unsigned int i = 0; i < 3; i++)
         {
-            if (file_arguments.h_args[i] != NULL)
+            if (file_arguments->h_args[i] != NULL)
             {
                 fd1 = open(file_name, O_RDWR, 0777);
                 if (fd1 < 0)
@@ -215,7 +215,7 @@ int process_data(fore_args file_arguments, struct timespec start)
                 }
                 char *h_string = malloc(255 * sizeof(char));
                 char *tmp_string = malloc(25 * sizeof(char));
-                sprintf(h_string, "%ssum %s > %s", file_arguments.h_args[i], file_arguments.f_or_dir, file_name);
+                sprintf(h_string, "%ssum %s > %s", file_arguments->h_args[i], file_arguments->f_or_dir, file_name);
                 system(h_string);
                 memset(h_string, '\0', 255 * sizeof(char));
                 fgets(h_string, 255, fp);
@@ -233,9 +233,9 @@ int process_data(fore_args file_arguments, struct timespec start)
 
     sprintf(info_to_write + strlen(info_to_write), "\n");
 
-    if (file_arguments.arg_o)
+    if (file_arguments->arg_o)
     {
-        int fd_o = open(file_arguments.outfile, O_RDWR | O_CREAT | O_APPEND, 0777);
+        int fd_o = open(file_arguments->outfile, O_RDWR | O_CREAT | O_APPEND, 0777);
         if (fd_o < 0)
         {
             perror("open");
@@ -255,23 +255,22 @@ int process_data(fore_args file_arguments, struct timespec start)
 
     free(info_to_write);
 
-    if (file_arguments.arg_v)
+    if (file_arguments->arg_v)
     {
 
-        int logfile = open(file_arguments.logfilename, O_RDWR | O_CREAT | O_APPEND, 0777);
+        int logfile = open(file_arguments->logfilename, O_RDWR | O_CREAT | O_APPEND, 0777);
         if (logfile < 0)
         {
             perror("open");
             exit(-1);
         }
         clock_gettime(CLOCK_MONOTONIC, &event);
-        write_to_logfile(logfile, (double)(event.tv_nsec - start.tv_nsec) / 1000000000.0 + (double)(event.tv_sec - start.tv_sec), getpid(), ANALIZED, file_arguments.f_or_dir);
+        write_to_logfile(logfile, (double)(event.tv_nsec - start.tv_nsec) / 1000000000.0 + (double)(event.tv_sec - start.tv_sec), getpid(), ANALIZED, file_arguments->f_or_dir);
         close(logfile);
     }
     
     free(file_name);
     
-
     if (sigint_activated) //Pressed CTRL+C -> exit
     {
         fcloseall();

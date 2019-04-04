@@ -15,31 +15,31 @@
 
 #include "forensic.h"
 
-fore_args parse_data(int argc, char *argv[], char *envp[])
+fore_args* parse_data(int argc, char *argv[], char *envp[])
 {
-    fore_args args;
-    args.arg_r = false;
-    args.arg_h = false;
+    fore_args *args = malloc(sizeof(fore_args));
+    args->arg_r = false;
+    args->arg_h = false;
     for (int i = 0; i < 3; i++)
     {
-        args.h_args[i] = NULL;
+        args->h_args[i] = NULL;
     }
-    args.arg_o = false;
-    args.outfile = NULL;
-    args.arg_v = false;
-    args.logfilename = NULL;
-    args.f_or_dir = NULL;
+    args->arg_o = false;
+    args->outfile = NULL;
+    args->arg_v = false;
+    args->logfilename = NULL;
+    args->f_or_dir = NULL;
 
     for (int i = 1; i < argc - 1; i++)
     {
         if (strcmp(argv[i], "-r") == 0)
         {
-            args.arg_r = true;
+            args->arg_r = true;
             continue;
         }
         else if (strcmp(argv[i], "-h") == 0)
         {
-            args.arg_h = true;
+            args->arg_h = true;
             i++;
 
             char *h_arg = (char *)malloc(20);
@@ -64,7 +64,7 @@ fore_args parse_data(int argc, char *argv[], char *envp[])
                     exit(1);
                 }
 
-                args.h_args[0] = "md5";
+                args->h_args[0] = "md5";
             }
 
             memset(h_arg, '\0', 20);
@@ -87,13 +87,13 @@ fore_args parse_data(int argc, char *argv[], char *envp[])
                     exit(1);
                 }
 
-                if (args.h_args[0] != NULL)
+                if (args->h_args[0] != NULL)
                 {
-                    args.h_args[1] = "sha1";
+                    args->h_args[1] = "sha1";
                 }
                 else
                 {
-                    args.h_args[0] = "sha1";
+                    args->h_args[0] = "sha1";
                 }
             }
 
@@ -117,20 +117,20 @@ fore_args parse_data(int argc, char *argv[], char *envp[])
                     exit(1);
                 }
 
-                if (args.h_args[0] != NULL)
+                if (args->h_args[0] != NULL)
                 {
-                    if (args.h_args[1] != NULL)
+                    if (args->h_args[1] != NULL)
                     {
-                        args.h_args[2] = "sha256";
+                        args->h_args[2] = "sha256";
                     }
                     else
                     {
-                        args.h_args[1] = "sha256";
+                        args->h_args[1] = "sha256";
                     }
                 }
                 else
                 {
-                    args.h_args[0] = "sha256";
+                    args->h_args[0] = "sha256";
                 }
             }
 
@@ -140,24 +140,25 @@ fore_args parse_data(int argc, char *argv[], char *envp[])
         }
         else if (strcmp(argv[i], "-o") == 0)
         {
-            args.arg_o = true;
+            args->arg_o = true;
             i++;
             if (strcmp(argv[i], argv[argc - 1]) == 0 || (strcmp(argv[i], "-v")) == 0)
             {
                 break;
             }
-            args.outfile = argv[i];
+            args->outfile = argv[i];
             continue;
         }
         else if (strcmp(argv[i], "-v") == 0)
         {
-            args.arg_v = true;
-            args.logfilename = get_filename_var(envp);
+            args->arg_v = true;
+            args->logfilename = get_filename_var(envp);
             continue;
         }
     }
 
-    args.f_or_dir = argv[argc - 1];
+    args->f_or_dir = malloc(1000*sizeof(char));
+    strcpy(args->f_or_dir, argv[argc - 1]);
 
     return args;
 }
@@ -181,4 +182,6 @@ void free_arguments(fore_args *arguments)
 {
     if (arguments->logfilename != NULL)
         free(arguments->logfilename);
+
+    free(arguments->f_or_dir);
 }
