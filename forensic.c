@@ -49,7 +49,7 @@ void sigusr2_handler(int signo){
 void waitForChildren(){
     pid_t wait_all;
     do{
-        wait_ret = wait(NULL);
+        wait_all = wait(NULL);
     } while(errno != ECHILD && wait_all != -1);
 }
 
@@ -86,6 +86,34 @@ int main(int argc, char *argv[], char *envp[])
     }
 
     fore_args *arguments = parse_data(argc, argv, envp);
+
+
+    if (arguments->arg_h)
+    {
+        if (arguments->h_args[0] == NULL)
+        {
+            printf("-h flag requires arguments!!!\n");
+            exit(1);
+        }
+    }
+
+    if (arguments->arg_o)
+    {
+        if (arguments->outfile == NULL)
+        {
+            printf("-o flag requires an argument!!!\n");
+            exit(1);
+        }
+    }
+
+    if (arguments->arg_v)
+    {
+        if (arguments->logfilename == NULL)
+        {
+            printf("LOGFILENAME variable not defined!!!\n");
+            exit(1);
+        }
+    }
 
     if(arguments->arg_o){
         num_directories = 0;

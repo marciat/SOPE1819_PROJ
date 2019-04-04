@@ -52,33 +52,6 @@ int process_data(fore_args *file_arguments, struct timespec start)
 
     struct timespec event;
 
-    if (file_arguments->arg_h)
-    {
-        if (file_arguments->h_args[0] == NULL)
-        {
-            printf("-h flag requires arguments!!!\n");
-            exit(1);
-        }
-    }
-
-    if (file_arguments->arg_o)
-    {
-        if (file_arguments->outfile == NULL)
-        {
-            printf("-o flag requires an argument!!!\n");
-            exit(1);
-        }
-    }
-
-    if (file_arguments->arg_v)
-    {
-        if (file_arguments->logfilename == NULL)
-        {
-            printf("LOGFILENAME variable not defined!!!\n");
-            exit(1);
-        }
-    }
-
     if (sigint_activated)//Pressed CTRL+C -> exit
     { 
         exit(1);

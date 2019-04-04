@@ -41,6 +41,14 @@ fore_args* parse_data(int argc, char *argv[], char *envp[])
         {
             args->arg_h = true;
             i++;
+            if(i >=argc){
+                break;
+            }
+
+            if (i == argc-1 || (strcmp(argv[i], "-o")) == 0)
+            {
+                break;
+            }
 
             char *h_arg = (char *)malloc(20);
             memset(h_arg, '\0', 20);
@@ -142,7 +150,10 @@ fore_args* parse_data(int argc, char *argv[], char *envp[])
         {
             args->arg_o = true;
             i++;
-            if (strcmp(argv[i], argv[argc - 1]) == 0 || (strcmp(argv[i], "-v")) == 0)
+            if(i >=argc){
+                break;
+            }
+            if (i == argc-1 || (strcmp(argv[i], "-v")) == 0)
             {
                 break;
             }
