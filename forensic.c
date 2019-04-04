@@ -13,6 +13,7 @@
 #include <time.h>
 #include <dirent.h>
 #include <signal.h>
+#include <sys/wait.h>
 
 #include "forensic.h"
 
@@ -39,6 +40,17 @@ void sigusr1_handler(int signo){
 void sigusr2_handler(int signo){
     (void) signo;
     num_files++;
+    char* string = malloc(100*sizeof(char));
+    sprintf(string, "New File: %d/%d directories/files at this time.\n", num_directories, num_files);
+    write(STDOUT_FILENO, string, strlen(string));
+    free(string);
+}
+
+void waitForChildren(){
+    pid_t wait_all;
+    do{
+        wait_ret = wait(NULL);
+    } while(errno != ECHILD && wait_all != -1);
 }
 
 int main(int argc, char *argv[], char *envp[])
@@ -62,7 +74,7 @@ int main(int argc, char *argv[], char *envp[])
     struct sigaction action;
     action.sa_handler = sigint_handler;
     sigemptyset(&action.sa_mask);
-    action.sa_flags = SA_RESTART;
+    action.sa_flags = SA_RESTART | SA_NODEFER;
     if (sigaction(SIGINT, &action, NULL) < 0)
     {
         perror("sigaction");
@@ -81,7 +93,7 @@ int main(int argc, char *argv[], char *envp[])
         struct sigaction action1;
         action1.sa_handler = sigusr1_handler;
         sigemptyset(&action1.sa_mask);
-        action1.sa_flags = SA_RESTART;
+        action1.sa_flags = SA_RESTART | SA_NODEFER;
         if(sigaction(SIGUSR1, &action1, NULL) < 0){
             perror("sigaction");
             exit(1);
@@ -89,7 +101,7 @@ int main(int argc, char *argv[], char *envp[])
 
         action1.sa_handler = sigusr2_handler;
         sigemptyset(&action1.sa_mask);
-        action1.sa_flags = SA_RESTART;
+        action1.sa_flags = SA_RESTART | SA_NODEFER;
         if(sigaction(SIGUSR2, &action1, NULL) < 0){
             perror("sigaction");
             exit(1);
@@ -135,6 +147,7 @@ int main(int argc, char *argv[], char *envp[])
         exit(1);
     }
 
+waitForChildren();
     return 0;
 }
 
