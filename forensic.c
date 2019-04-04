@@ -29,18 +29,15 @@ void sigint_handler(int signo)
 void sigusr1_handler(int signo){
     (void) signo;
     num_directories++;
+    char* string = malloc(100*sizeof(char));
+    sprintf(string, "New directory: %d/%d directories/files at this time.\n", num_directories, num_files);
+    write(STDOUT_FILENO, string, strlen(string));
+    free(string);
 }
 
 void sigusr2_handler(int signo){
     (void) signo;
     num_files++;
-}
-
-void progress_information(){
-    char* string = malloc(100);
-    sprintf(string, "New directory: %d/%d directories/files at this time.\n", num_directories, num_files);
-    write(STDOUT_FILENO, string, strlen(string));
-    free(string);
 }
 
 int main(int argc, char *argv[], char *envp[])
@@ -150,7 +147,6 @@ int forensic(fore_args* arguments, struct timespec start)
     {
         if(arguments->arg_o){
             kill(0,  SIGUSR1);
-            progress_information();
         }
 
         DIR *dir;

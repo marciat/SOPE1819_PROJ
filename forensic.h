@@ -30,10 +30,14 @@ void free_arguments(fore_args *arguments);
 
 void write_to_logfile(int logfile, double inst, pid_t pid, enum evt_type event, char* description); 
 
-void progress_information();
-
 extern bool sigint_activated;
 extern unsigned num_directories;
 extern unsigned num_files;
+
+void sigint_handler(int signo);
+
+void sigusr1_handler(int signo);
+
+void sigusr2_handler(int signo);
 
 #endif
