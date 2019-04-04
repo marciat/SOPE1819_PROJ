@@ -211,7 +211,7 @@ int forensic(fore_args arguments, struct timespec start)
                 else //File in directory
                 {
                     if(arguments.arg_o){
-                        kill(getpid(),  SIGUSR1);
+                        kill(getpid(),  SIGUSR2);
                     }
                     
                     char *tmp_f_or_dir = malloc(strlen(arguments.f_or_dir));
