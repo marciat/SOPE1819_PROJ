@@ -171,7 +171,7 @@ int forensic(fore_args arguments, struct timespec start)
     if ((stat(arguments.f_or_dir, &directory_stat) >= 0) && S_ISDIR(directory_stat.st_mode)) //Found directory
     {
         if(arguments.arg_o){
-            kill(0,  SIGUSR1);
+            kill(getpid(),  SIGUSR1);
             progress_information();
         }
 
@@ -213,7 +213,7 @@ int forensic(fore_args arguments, struct timespec start)
                 else //File in directory
                 {
                     if(arguments.arg_o){
-                        kill(-1,  SIGUSR2);
+                        kill(getpid(),  SIGUSR2);
                     }
                     
                     char *tmp_f_or_dir = malloc(strlen(arguments.f_or_dir));
@@ -243,7 +243,7 @@ int forensic(fore_args arguments, struct timespec start)
     else //Found file
     {
         if(arguments.arg_o){
-            kill(0,  SIGUSR2);
+            kill(getpid(),  SIGUSR2);
         }
 
         if (process_data(arguments,start)) //Process data for just one file
