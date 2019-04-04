@@ -46,7 +46,7 @@ void sigusr2_handler(int signo){
     free(string);
 }
 
-void waitForChildren(){
+void wait_for_children(){
     pid_t wait_all;
     do{
         wait_all = wait(NULL);
@@ -175,7 +175,7 @@ int main(int argc, char *argv[], char *envp[])
         exit(1);
     }
 
-waitForChildren();
+	wait_for_children();
     return 0;
 }
 
@@ -190,6 +190,21 @@ int forensic(fore_args* arguments, struct timespec start)
     {
         if(arguments->arg_o){
             kill(main_pid,  SIGUSR1);
+            if(arguments->arg_v && arguments->logfilename != NULL){
+            	int logfile = open(arguments->logfilename, O_RDWR | O_CREAT | O_APPEND, 0777);
+        		if (logfile < 0)
+        		{
+            		perror("open");
+            		exit(-1);
+        		}
+        		struct timespec event;
+        		char* event_desc = malloc(500 * sizeof(char));
+            	sprintf(event_desc, "%s", "SIGUSR1");
+        		clock_gettime(CLOCK_MONOTONIC, &event);
+        		write_to_logfile(logfile, (double)(event.tv_nsec - start.tv_nsec) / 1000000000.0 + (double)(event.tv_sec - start.tv_sec), getpid(), SIGNAL, event_desc);
+        		free(event_desc);
+        		close(logfile);
+        	}
         }
 
         DIR *dir;
@@ -230,7 +245,22 @@ int forensic(fore_args* arguments, struct timespec start)
                 else //File in directory
                 {
                     if(arguments->arg_o){
+                    	struct timespec event;
                         kill(main_pid,  SIGUSR2);
+                       	if(arguments->arg_v && arguments->logfilename != NULL){
+            				int logfile = open(arguments->logfilename, O_RDWR | O_CREAT | O_APPEND, 0777);
+        					if (logfile < 0)
+        					{
+            					perror("open");
+            					exit(-1);
+        					}
+        					clock_gettime(CLOCK_MONOTONIC, &event);
+        					char* event_desc = malloc(500 * sizeof(char));
+            				sprintf(event_desc, "%s", "SIGUSR2");
+        					write_to_logfile(logfile, (double)(event.tv_nsec - start.tv_nsec) / 1000000000.0 + (double)(event.tv_sec - start.tv_sec), getpid(), SIGNAL, event_desc);
+        					close(logfile);
+        					free(event_desc);
+        				}
                     }
                     
                     char *tmp_f_or_dir = malloc(strlen(arguments->f_or_dir) + 1);
@@ -260,7 +290,21 @@ int forensic(fore_args* arguments, struct timespec start)
     else //Found file
     {
         if(arguments->arg_o){
+        	struct timespec event;
             kill(main_pid,  SIGUSR2);
+            if(arguments->arg_v && arguments->logfilename != NULL){
+            	int logfile = open(arguments->logfilename, O_RDWR | O_CREAT | O_APPEND, 0777);
+        		if (logfile < 0)
+        		{
+            		perror("open");
+            		exit(-1);
+        		}
+        		clock_gettime(CLOCK_MONOTONIC, &event);
+        		char* event_desc = malloc(500 * sizeof(char));
+            	sprintf(event_desc, "%s", "SIGUSR2");
+        		write_to_logfile(logfile, (double)(event.tv_nsec - start.tv_nsec) / 1000000000.0 + (double)(event.tv_sec - start.tv_sec), getpid(), SIGNAL, event_desc);
+        		close(logfile);
+        	}
         }
 
         if (process_data(arguments,start)) //Process data for just one file
