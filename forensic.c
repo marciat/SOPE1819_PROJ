@@ -38,7 +38,7 @@ void sigusr2_handler(int signo){
 
 void progress_information(){
     char* string = malloc(100);
-    sprintf(string, "New directory: %d/%d directories/files at this time.", num_directories, num_files);
+    sprintf(string, "New directory: %d/%d directories/files at this time.\n", num_directories, num_files);
     write(STDOUT_FILENO, string, strlen(string));
     free(string);
 }
