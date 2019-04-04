@@ -17,8 +17,8 @@
 #include "forensic.h"
 
 bool sigint_actived = false;
-unsigned num_directories = 0;
-unsigned num_files = 0;
+unsigned num_directories;
+unsigned num_files;
 
 void sigint_handler(int signo)
 {
@@ -77,6 +77,8 @@ int main(int argc, char *argv[], char *envp[])
     fore_args arguments = parse_data(argc, argv, envp);
 
     if(arguments.arg_o){
+        num_directories = 0;
+        num_files = 0;
         struct sigaction action1;
         action1.sa_handler = sigusr1_handler;
         sigemptyset(&action1.sa_mask);
@@ -169,7 +171,7 @@ int forensic(fore_args arguments, struct timespec start)
     if ((stat(arguments.f_or_dir, &directory_stat) >= 0) && S_ISDIR(directory_stat.st_mode)) //Found directory
     {
         if(arguments.arg_o){
-            kill(getpid(),  SIGUSR1);
+            kill(0,  SIGUSR1);
             progress_information();
         }
 
@@ -211,7 +213,7 @@ int forensic(fore_args arguments, struct timespec start)
                 else //File in directory
                 {
                     if(arguments.arg_o){
-                        kill(getpid(),  SIGUSR2);
+                        kill(-1,  SIGUSR2);
                     }
                     
                     char *tmp_f_or_dir = malloc(strlen(arguments.f_or_dir));
@@ -241,7 +243,7 @@ int forensic(fore_args arguments, struct timespec start)
     else //Found file
     {
         if(arguments.arg_o){
-            kill(getpid(),  SIGUSR2);
+            kill(0,  SIGUSR2);
         }
 
         if (process_data(arguments,start)) //Process data for just one file
@@ -254,6 +256,8 @@ int forensic(fore_args arguments, struct timespec start)
     if(sigint_actived){ //Pressed CTRL+C -> exit
         exit(1);
     }
+
+    progress_information();
 
     return 0;
 }

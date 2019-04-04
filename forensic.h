@@ -33,5 +33,7 @@ void write_to_logfile(int logfile, double inst, pid_t pid, enum evt_type event, 
 void progress_information();
 
 extern bool sigint_actived;
+extern unsigned num_directories;
+extern unsigned num_files;
 
 #endif
