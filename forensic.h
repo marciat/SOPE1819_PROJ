@@ -33,6 +33,7 @@ void write_to_logfile(int logfile, double inst, pid_t pid, enum evt_type event, 
 extern bool sigint_activated;
 extern unsigned num_directories;
 extern unsigned num_files;
+extern pid_t main_pid;
 
 void sigint_handler(int signo);
 

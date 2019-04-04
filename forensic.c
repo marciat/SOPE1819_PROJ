@@ -19,6 +19,7 @@
 bool sigint_activated = false;
 unsigned num_directories;
 unsigned num_files;
+pid_t main_pid;
 
 void sigint_handler(int signo)
 {
@@ -42,6 +43,7 @@ void sigusr2_handler(int signo){
 
 int main(int argc, char *argv[], char *envp[])
 {
+	main_pid = getpid();
     struct timespec start;
     clock_gettime(CLOCK_MONOTONIC, &start);
     setbuf(stdout, NULL);
@@ -146,7 +148,7 @@ int forensic(fore_args* arguments, struct timespec start)
     if ((stat(arguments->f_or_dir, &directory_stat) >= 0) && S_ISDIR(directory_stat.st_mode)) //Found directory
     {
         if(arguments->arg_o){
-            kill(0,  SIGUSR1);
+            kill(main_pid,  SIGUSR1);
         }
 
         DIR *dir;
@@ -187,7 +189,7 @@ int forensic(fore_args* arguments, struct timespec start)
                 else //File in directory
                 {
                     if(arguments->arg_o){
-                        kill(0,  SIGUSR2);
+                        kill(main_pid,  SIGUSR2);
                     }
                     
                     char *tmp_f_or_dir = malloc(strlen(arguments->f_or_dir) + 1);
@@ -217,7 +219,7 @@ int forensic(fore_args* arguments, struct timespec start)
     else //Found file
     {
         if(arguments->arg_o){
-            kill(0,  SIGUSR2);
+            kill(main_pid,  SIGUSR2);
         }
 
         if (process_data(arguments,start)) //Process data for just one file
