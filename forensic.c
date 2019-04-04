@@ -141,7 +141,8 @@ int main(int argc, char *argv[], char *envp[])
 
         clock_gettime(CLOCK_MONOTONIC, &event);
     	write_to_logfile(logfile, (double)(event.tv_nsec-start.tv_nsec)/1000000000.0+(double)(event.tv_sec - start.tv_sec), getpid(), COMMAND, event_desc);
-    	free(event_desc);
+    	
+        free(event_desc);
     	close(logfile);
 	}
 

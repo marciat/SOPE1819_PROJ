@@ -164,37 +164,21 @@ fore_args parse_data(int argc, char *argv[], char *envp[])
 
 char *get_filename_var()
 {
-
+    char*logfilename = (char*)malloc(50*sizeof(char));
+ 
     char* var_name = "LOGFILENAME";
+    var_name = getenv(var_name);
 
-    if(getenv(var_name) != NULL)
-        return getenv(var_name);
+    if(var_name == NULL) //If the LOGFILENAME variable doesn't exist, create new file for logs
+        sprintf(logfilename, "logs.txt");
+    else
+        strcpy(logfilename, var_name);
     
-    //If the LOGFILENAME variable doesn't exist, create new file for logs
-    char*logfilename = (char*)malloc(9*sizeof(char));
-    sprintf(logfilename, "logs.txt");
-
     return logfilename;
 }
 
 void free_arguments(fore_args *arguments)
 {
-    (void)arguments;
-    /*if (arguments->f_or_dir != NULL)
-        free(arguments->f_or_dir);*/
-    /*for (int i = 0; i < 3; i++)
-    {
-        if (arguments->h_args[i] != NULL)
-        {
-            free(arguments->h_args[i]);
-        }
-        else
-        {
-            break;
-        }
-    }*/
-    /*if (arguments->logfilename != NULL)
-        free(arguments->logfilename);*/
-    /*if (arguments->outfile != NULL)
-        free(arguments->outfile);*/
+    if (arguments->logfilename != NULL)
+        free(arguments->logfilename);
 }
