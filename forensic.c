@@ -17,11 +17,30 @@
 #include "forensic.h"
 
 bool sigint_actived = false;
+unsigned num_directories = 0;
+unsigned num_files = 0;
 
 void sigint_handler(int signo)
 {
+    (void) signo;
     sigint_actived = true;
-    printf("Actived signal %d \n", signo);
+}
+
+void sigusr1_handler(int signo){
+    (void) signo;
+    num_directories++;
+}
+
+void sigusr2_handler(int signo){
+    (void) signo;
+    num_files++;
+}
+
+void progress_information(){
+    char* string = malloc(100);
+    sprintf(string, "New directory: %d/%d directories/files at this time.", num_directories, num_files);
+    write(STDOUT_FILENO, string, strlen(string));
+    free(string);
 }
 
 int main(int argc, char *argv[], char *envp[])
@@ -56,6 +75,25 @@ int main(int argc, char *argv[], char *envp[])
     }
 
     fore_args arguments = parse_data(argc, argv, envp);
+
+    if(arguments.arg_o){
+        struct sigaction action1;
+        action1.sa_handler = sigusr1_handler;
+        sigemptyset(&action1.sa_mask);
+        action1.sa_flags = SA_RESTART;
+        if(sigaction(SIGUSR1, &action1, NULL) < 0){
+            perror("sigaction");
+            exit(1);
+        }
+
+        action1.sa_handler = sigusr2_handler;
+        sigemptyset(&action1.sa_mask);
+        action1.sa_flags = SA_RESTART;
+        if(sigaction(SIGUSR2, &action1, NULL) < 0){
+            perror("sigaction");
+            exit(1);
+        }
+    }
 
     if(sigint_actived){ //Pressed CTRL+C -> exit
         exit(1);
@@ -130,6 +168,11 @@ int forensic(fore_args arguments, struct timespec start)
     struct stat directory_stat;
     if ((stat(arguments.f_or_dir, &directory_stat) >= 0) && S_ISDIR(directory_stat.st_mode)) //Found directory
     {
+        if(arguments.arg_o){
+            kill(getpid(),  SIGUSR1);
+            progress_information();
+        }
+
         DIR *dir;
         struct dirent *ent;
         if ((dir = opendir(arguments.f_or_dir)) != NULL)
@@ -159,7 +202,7 @@ int forensic(fore_args arguments, struct timespec start)
                         {
                             strcpy(arguments.f_or_dir, new_name); //New directory name
 
-                            if (forensic(arguments, start)) //, originalDirectory))
+                            if (forensic(arguments, start))
                                 return 1;
                             break;
                         }
@@ -167,6 +210,10 @@ int forensic(fore_args arguments, struct timespec start)
                 }
                 else //File in directory
                 {
+                    if(arguments.arg_o){
+                        kill(getpid(),  SIGUSR1);
+                    }
+                    
                     char *tmp_f_or_dir = malloc(strlen(arguments.f_or_dir));
                     strcpy(tmp_f_or_dir, arguments.f_or_dir);
                     strcpy(arguments.f_or_dir, new_name); //New file name
@@ -193,6 +240,10 @@ int forensic(fore_args arguments, struct timespec start)
     }
     else //Found file
     {
+        if(arguments.arg_o){
+            kill(getpid(),  SIGUSR2);
+        }
+
         if (process_data(arguments,start)) //Process data for just one file
         {
             printf("ERROR!!!");
