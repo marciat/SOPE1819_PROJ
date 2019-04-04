@@ -16,14 +16,14 @@
 
 #include "forensic.h"
 
-bool sigint_actived = false;
+bool sigint_activated = false;
 unsigned num_directories;
 unsigned num_files;
 
 void sigint_handler(int signo)
 {
     (void) signo;
-    sigint_actived = true;
+    sigint_activated = true;
 }
 
 void sigusr1_handler(int signo){
@@ -70,7 +70,7 @@ int main(int argc, char *argv[], char *envp[])
         exit(1);
     }
 
-    if(sigint_actived){ //Pressed CTRL+C -> exit
+    if(sigint_activated){ //Pressed CTRL+C -> exit
         exit(1);
     }
 
@@ -97,7 +97,7 @@ int main(int argc, char *argv[], char *envp[])
         }
     }
 
-    if(sigint_actived){ //Pressed CTRL+C -> exit
+    if(sigint_activated){ //Pressed CTRL+C -> exit
         exit(1);
     }
 
@@ -146,7 +146,7 @@ int main(int argc, char *argv[], char *envp[])
     	close(logfile);
 	}
 
-    if(sigint_actived){ //Pressed CTRL+C -> exit
+    if(sigint_activated){ //Pressed CTRL+C -> exit
         exit(1);
     }
 
@@ -155,7 +155,7 @@ int main(int argc, char *argv[], char *envp[])
     
     free_arguments(&arguments);
 
-    if(sigint_actived){ //Pressed CTRL+C -> exit
+    if(sigint_activated){ //Pressed CTRL+C -> exit
         exit(1);
     }
 
@@ -164,7 +164,7 @@ int main(int argc, char *argv[], char *envp[])
 
 int forensic(fore_args arguments, struct timespec start)
 {
-    if(sigint_actived){ //Pressed CTRL+C -> exit
+    if(sigint_activated){ //Pressed CTRL+C -> exit
         exit(1);
     }
 
@@ -182,7 +182,7 @@ int forensic(fore_args arguments, struct timespec start)
         {
             while ((ent = readdir(dir)) != NULL)
             {   
-                if(sigint_actived){ //Pressed CTRL+C -> exit
+                if(sigint_activated){ //Pressed CTRL+C -> exit
                     exit(1);
                 }
 
@@ -231,7 +231,7 @@ int forensic(fore_args arguments, struct timespec start)
                     free(tmp_f_or_dir);
                 }
 
-                if(sigint_actived){ //Pressed CTRL+C -> exit
+                if(sigint_activated){ //Pressed CTRL+C -> exit
                     exit(1);
                 }
 
@@ -254,7 +254,7 @@ int forensic(fore_args arguments, struct timespec start)
         }
     }
 
-    if(sigint_actived){ //Pressed CTRL+C -> exit
+    if(sigint_activated){ //Pressed CTRL+C -> exit
         exit(1);
     }
 
