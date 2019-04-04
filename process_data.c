@@ -237,9 +237,7 @@ int process_data(fore_args file_arguments, struct timespec start)
     else
         write(STDOUT_FILENO, info_to_write, strlen(info_to_write));
 
-    int status = remove(file_name);
-
-    if(status!=0){
+    if(remove(file_name) != 0){
         perror("remove");
     }
 
