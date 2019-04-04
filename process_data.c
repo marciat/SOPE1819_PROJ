@@ -36,7 +36,7 @@ void write_to_logfile(int logfile, double inst, pid_t pid, enum evt_type event, 
 
 int process_data(fore_args file_arguments, struct timespec start)
 {
-    if(sigint_actived){ //Pressed CTRL+C -> exit
+    if(sigint_activated){ //Pressed CTRL+C -> exit
         exit(1);
     }
 
@@ -78,7 +78,7 @@ int process_data(fore_args file_arguments, struct timespec start)
         }
     }
 
-    if(sigint_actived){ //Pressed CTRL+C -> exit
+    if(sigint_activated){ //Pressed CTRL+C -> exit
         exit(1);
     }
 
@@ -257,7 +257,7 @@ int process_data(fore_args file_arguments, struct timespec start)
     
     free(file_name);
     
-    if(sigint_actived){ //Pressed CTRL+C -> exit
+    if(sigint_activated){ //Pressed CTRL+C -> exit
         exit(1);
     }
 
