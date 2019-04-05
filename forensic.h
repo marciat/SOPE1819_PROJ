@@ -41,4 +41,9 @@ void sigusr1_handler(int signo);
 
 void sigusr2_handler(int signo);
 
+void wait_for_children();
+
+#define READ 0
+#define WRITE 1
+
 #endif

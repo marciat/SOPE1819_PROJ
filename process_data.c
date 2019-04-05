@@ -13,6 +13,7 @@
 #include <errno.h>
 #include <time.h>
 #include <dirent.h>
+#include <sys/wait.h>
 
 #include "forensic.h"
 
@@ -57,37 +58,35 @@ int process_data(fore_args *file_arguments, struct timespec start)
         exit(1);
     }
 
+    int fd[2];
+    if(pipe(fd) == -1){
+        perror("pipe");
+        exit(1);
+    }
+    
     //Read File Type
-    char *file_name = malloc(500 * sizeof(char));
-    sprintf(file_name, "f%s.txt", file_arguments->f_or_dir);
-    for (size_t i = 0; i < strlen(file_name); i++)
-    {
-        if (file_name[i] == '/')
-            file_name[i] = '_';
+    char* file_string = malloc(500*sizeof(char));
+
+    int fork_value = fork();
+    if(fork_value < 0){
+        perror("fork");
+        exit(1);
     }
-
-    int fd1 = open(file_name, O_RDWR | O_CREAT, 0777);
-    if (fd1 < 0)
-    {
-        perror("open");
-        exit(-1);
+    else if (fork_value == 0){
+        close(fd[READ]);
+        if(dup2(fd[WRITE],STDOUT_FILENO) < 0)
+        {
+            perror("dup2");
+            exit(1);
+        }
+        execlp("file", "file", file_arguments->f_or_dir, NULL);
+        close(fd[WRITE]);
+        exit(0);
     }
-
-    FILE *fp = fdopen(fd1, "r");
-    if (fp == NULL)
-    {
-        perror("fdopen");
-        exit(-1);
+    else{
+        close(fd[WRITE]);
+        while(read(fd[READ], file_string, 500) == 0);
     }
-
-    char *file_string = malloc(500 * sizeof(char));
-    sprintf(file_string, "file %s > %s", file_arguments->f_or_dir, file_name);
-    system(file_string);
-    memset(file_string, '\0', strlen(file_string) * sizeof(char));
-    fgets(file_string, 255, fp);
-    fclose(fp);
-    close(fd1);
-
     char *file_string_result = strstr(file_string, " ") + 1;
 
     size_t file_string_len = strlen(file_string_result);
@@ -174,32 +173,41 @@ int process_data(fore_args *file_arguments, struct timespec start)
         {
             if (file_arguments->h_args[i] != NULL)
             {
-                fd1 = open(file_name, O_RDWR, 0777);
-                if (fd1 < 0)
+                if(pipe(fd) < 0)
                 {
-                    perror("open");
+                    perror("pipe");
                     exit(1);
                 }
-                fp = fdopen(fd1, "r");
-                if (fp == NULL)
-                {
-                    perror("fdopen");
-                    exit(1);
-                }
-                char *h_string = malloc(255 * sizeof(char));
-                char *tmp_string = malloc(25 * sizeof(char));
-                sprintf(h_string, "%ssum %s > %s", file_arguments->h_args[i], file_arguments->f_or_dir, file_name);
-                system(h_string);
-                memset(h_string, '\0', 255 * sizeof(char));
-                fgets(h_string, 255, fp);
-                sscanf(h_string, "%s %s", h_string, tmp_string);
-                sprintf(info_to_write + strlen(info_to_write), ",%s", h_string);
-        
-                free(h_string);
-                free(tmp_string);
 
-                fclose(fp);
-                close(fd1);
+                char *h_string = malloc(256 * sizeof(char));
+                sprintf(h_string, "%ssum", file_arguments->h_args[i]);
+                
+                fork_value = fork();
+                if(fork_value < 0){
+                    perror("fork");
+                    exit(1);
+                }
+                else if(fork_value == 0){
+                    close(fd[READ]);
+                    if(dup2(fd[WRITE],STDOUT_FILENO) < 0)
+                    {
+                        perror("dup2");
+                        exit(1);
+                    }
+                    execlp(h_string, h_string, file_arguments->f_or_dir, NULL);
+                    close(fd[WRITE]);
+                    exit(0);
+                }
+                else{
+                    close(fd[WRITE]);
+                    memset(h_string, '\0', strlen(h_string));
+                    while(read(fd[READ], h_string, 255) == 0);
+                    char *tmp_string = malloc(25 * sizeof(char));
+                    sscanf(h_string, "%s %s", h_string, tmp_string);
+                    sprintf(info_to_write + strlen(info_to_write), ",%s", h_string);
+                    free(tmp_string);
+                }
+                free(h_string);
             }
         }
     }
@@ -220,10 +228,10 @@ int process_data(fore_args *file_arguments, struct timespec start)
     else
         write(STDOUT_FILENO, info_to_write, strlen(info_to_write));
 
-    if (remove(file_name) != 0)
+    /*if (remove(file_name) != 0)
     {
         perror("remove");
-    }
+    }*/
 
 
     free(info_to_write);
@@ -242,7 +250,7 @@ int process_data(fore_args *file_arguments, struct timespec start)
         close(logfile);
     }
     
-    free(file_name);
+    //free(file_name);
     
     if (sigint_activated) //Pressed CTRL+C -> exit
     {
