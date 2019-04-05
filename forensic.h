@@ -2,8 +2,6 @@
 #ifndef _FORENSIC_H
 #define _FORENSIC_H
 
-#include "logfileinfo.h"
-
 typedef struct
 {
     bool arg_r;        //Option -r of forensic program
@@ -15,6 +13,8 @@ typedef struct
     char* logfilename; //If -v is selected, this stores the value of LOGFILENAME variable
     char *f_or_dir;    //File or directory to be evaluated
 } fore_args;
+
+enum evt_type {COMMAND, ANALIZED, SIGNAL};
 
 int forensic(fore_args *arguments, struct timespec start);
 
