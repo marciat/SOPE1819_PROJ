@@ -37,7 +37,7 @@ void write_to_logfile(int logfile, double inst, pid_t pid, enum evt_type event, 
         break;
     }
     char *info = malloc(500 * sizeof(char));
-    sprintf(info, "%.2f - %8d - %s %s\n", inst, pid, evt_name, description);
+    sprintf(info, "%.2f - %8d - %s %s\n", inst*1000.0, pid, evt_name, description);
     write(logfile, info, strlen(info));
     
     free(info);
