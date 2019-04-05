@@ -228,12 +228,6 @@ int process_data(fore_args *file_arguments, struct timespec start)
     else
         write(STDOUT_FILENO, info_to_write, strlen(info_to_write));
 
-    /*if (remove(file_name) != 0)
-    {
-        perror("remove");
-    }*/
-
-
     free(info_to_write);
 
     if (file_arguments->arg_v)
@@ -249,8 +243,6 @@ int process_data(fore_args *file_arguments, struct timespec start)
         write_to_logfile(logfile, (double)(event.tv_nsec - start.tv_nsec) / 1000000000.0 + (double)(event.tv_sec - start.tv_sec), getpid(), ANALIZED, file_arguments->f_or_dir);
         close(logfile);
     }
-    
-    //free(file_name);
     
     if (sigint_activated) //Pressed CTRL+C -> exit
     {

@@ -168,14 +168,32 @@ int main(int argc, char *argv[], char *envp[])
 
     if (forensic(arguments, start))
         return 1;
-    
-    free_arguments(arguments);
+
+
 
     if(sigint_activated){ //Pressed CTRL+C -> exit
         exit(1);
     }
 
+    free_arguments(arguments);
+
 	wait_for_children();
+	
+	if(getpid() == main_pid){
+    	if(arguments->arg_o){
+    		char* saved_info = malloc(100 * sizeof(char));
+    		sprintf(saved_info, "Data saved on file %s\n", arguments->outfile);
+    		write(STDOUT_FILENO, saved_info, strlen(saved_info));
+    		free(saved_info);
+    	}
+
+    	if(arguments->arg_v){
+    		char* log_info = malloc(100 * sizeof(char));
+    		sprintf(log_info, "Execution records saved on file %s\n", arguments->logfilename);
+    		write(STDOUT_FILENO, log_info, strlen(log_info));
+    		free(log_info);
+    	}
+    }
     return 0;
 }
 
