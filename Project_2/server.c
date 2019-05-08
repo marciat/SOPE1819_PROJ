@@ -31,7 +31,10 @@ int main(int argc, char* argv[]){
 		exit(-2);
 	}
 
-	check_number(argv[1]);
+	if(!check_number(argv[1])){
+		printf("First argument must be a positive integer.\n");
+		exit(-3);
+	}
 
 	if(atoi(argv[1]) > 99 || atoi(argv[1]) < 1 || strlen(argv[1]) > 9){
 		printf("Number of bank offices must be between 1 and 99.\n");

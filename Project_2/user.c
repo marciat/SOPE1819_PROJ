@@ -4,9 +4,11 @@
 
 //Given header files
 #include "types.h"
+#include "constants.h"
 
 //Header files created by us
 #include "user.h"
+#include "parse.h"
 
 int main(int argc, char* argv[]){
 	setbuf(stdout, NULL);
@@ -16,13 +18,63 @@ int main(int argc, char* argv[]){
 		exit(0);
 	}
 
-	if(argc < 6){
+	if(argc != 6){
 		printf("Usage: user id_account \"account_password\"\n"); 
 		printf("			requested_delay operation_code\n");
 		printf("			\"argument_1\"...\n");
 		printf("Try user --help for more information\n.");
 		exit(-1);
 	}
+
+	if(!check_number(argv[1])){
+		printf("Account ID must be a positive integer.\n");
+		exit(-2);
+	}
+
+	if(strlen(argv[1]) > 9){
+		printf("Account ID cannot have more than 9 digits.\n");
+		exit(-3);
+	}
+
+	if(strlen(argv[2]) > 20 || strlen(argv[2]) < 8){
+		printf("Password length must be between 8 to 20 characters.\n");
+		exit(-4);
+	}
+
+	if(!check_number(argv[3])){
+		printf("Operation delay must be a positive integer.\n");
+		exit(-5);
+	}
+
+	if(!check_number(argv[4])){
+		printf("Operation code must be a positive integer.\n");
+		exit(-6);
+	}
+
+	if(atoi(argv[4]) < 0 || atoi(argv[4]) > 3){
+		printf("Operation code must be between 0 and 3.\n");
+		exit(-7);
+	}
+
+	if(atoi(argv[4]) == 1 || atoi(argv[4]) == 3){
+		if(strlen(argv[5]) != 0){
+			printf("Operations 1 and 3 require an empty argument list.\n");
+			exit(-8);
+		}
+	}
+
+	if(atoi(argv[4]) == 0 || atoi(argv[4]) == 2){
+		if(strlen(argv[5]) == 0){
+			printf("Operations 0 and 2 require a non empty argument list.\n");
+			exit(-8);
+		}
+	}	
+
+	client_inf* client_information = malloc(sizeof(client_inf));
+
+	parse_client_inf(argv, client_information);
+
+	free_client_information(client_information);
 
 
 	return 0;

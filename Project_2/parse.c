@@ -84,6 +84,19 @@ void parse_server_inf(char* argv[], server_inf* inf){
 	}
 }
 
+
+void parse_client_inf(char* argv[], client_inf* inf){
+	inf->password_conta = malloc(MAX_PASSWORD_LEN+1);
+	inf->args_operacao = malloc(100);
+
+	inf->id_conta = atoi(argv[1]);
+	inf->password_conta = argv[2];
+	inf->atraso_operacao = atoi(argv[3]);
+	inf->operacao_realizar = atoi(argv[4]);
+	inf->args_operacao = argv[5];
+
+}
+
 void salt_generator(char* salt){
 	char string[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
@@ -106,12 +119,18 @@ void free_server_information(server_inf* server_information){
 	free(server_information);
 }
 
-void check_number(char* number_bank_offices){
+void free_client_information(client_inf* client_information){
+	free(client_information->password_conta);
+	free(client_information->args_operacao);
+	free(client_information);
+}
+
+int check_number(char* number_bank_offices){
 
 	for(int i = 0; i < (int)strlen(number_bank_offices); i++){
 		if(!isdigit(number_bank_offices[i])){
-			printf("First argument must be a positive integer.\n");
-			exit(-3);
+			return 0;
 		}
 	}
+	return 1;
 }
