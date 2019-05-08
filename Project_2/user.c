@@ -42,7 +42,8 @@ void user_help(){
 	printf("	Password used to access the server.\n\n");
 
 	printf("requested_delay:\n");
-	printf("	AINDA NÂO PERCEBI O QUE FAZ!!!\n\n"); //TODO change this
+	printf("	Number of miliseconds to wait before start the operation.\n");
+	printf("	This variable is used to test the synchronization of processes and threads.\n\n"); 
 
 	printf("operation_code:\n");
 	printf("	Code of the operation to execute.\n");
