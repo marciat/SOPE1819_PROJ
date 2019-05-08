@@ -1,15 +1,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 //Given header files
 #include "types.h"
+#include "constants.h"
 
 //Header files created by us
 #include "server.h"
+#include "parse.h"
 
 int main(int argc, char* argv[]){
 	setbuf(stdout, NULL);
+	srand(time(NULL));
 
 	if(argc == 2 && strcmp(argv[1], "--help") == 0){
 		server_help();
@@ -22,6 +26,11 @@ int main(int argc, char* argv[]){
 		exit(-1);
 	}
 
+	server_inf* server_information = malloc(sizeof(server_inf));
+
+	parse_server_inf(argv, server_information);
+
+	free_server_information(server_information);
 
 	return 0;
 }
