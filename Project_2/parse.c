@@ -1,6 +1,7 @@
 #include <string.h>
 #include <time.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <stdio.h>
@@ -16,9 +17,9 @@ void parse_server_inf(char* argv[], server_inf* inf){
 
 	salt_generator(inf->salt);
 
-	char* password = malloc(sizeof(argv[2])-2);
+	char* password = malloc(sizeof(argv[2]));
 
-	rem_quot(password, argv[2]);
+	//rem_quot(password, argv[2]);
 
 	int fd[2], fork_value;
 
@@ -103,4 +104,14 @@ void free_server_information(server_inf* server_information){
 	free(server_information->admin_password);
 	free(server_information->salt);
 	free(server_information);
+}
+
+void check_number(char* number_bank_offices){
+
+	for(int i = 0; i < (int)strlen(number_bank_offices); i++){
+		if(!isdigit(number_bank_offices[i])){
+			printf("First argument must be a positive integer.\n");
+			exit(-3);
+		}
+	}
 }

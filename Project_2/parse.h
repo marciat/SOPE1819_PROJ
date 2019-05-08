@@ -15,6 +15,8 @@ void salt_generator(char* salt);
 
 void rem_quot(char* password, char* pass_with_quot);
 
+void check_number(char* number_bank_offices);
+
 void free_server_information(server_inf* server_information);
 
 #define READ 0

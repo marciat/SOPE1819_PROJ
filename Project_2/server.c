@@ -26,6 +26,18 @@ int main(int argc, char* argv[]){
 		exit(-1);
 	}
 
+	if(strlen(argv[2]) > 20 || strlen(argv[2]) < 8){
+		printf("Password length must be between 8 to 20 characters.\n");
+		exit(-2);
+	}
+
+	check_number(argv[1]);
+
+	if(atoi(argv[1]) > 99 || atoi(argv[1]) < 1 || strlen(argv[1]) > 9){
+		printf("Number of bank offices must be between 1 and 99.\n");
+		exit(-4);
+	}
+
 	server_inf* server_information = malloc(sizeof(server_inf));
 
 	parse_server_inf(argv, server_information);
