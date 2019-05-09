@@ -117,3 +117,4 @@ int check_number(char* number_bank_offices){
 	}
 	return 1;
 }
+

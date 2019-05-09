@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 //Given header files
 #include "types.h"
@@ -74,22 +78,13 @@ int main(int argc, char* argv[]){
 
 	parse_client_inf(argv, client_information);
 
-	switch(client_information->operation){
-		case 0:
-			create_account(client_information);
-			break;
-		case 1:
-			check_balance(client_information);
-			break;
-		case 2:
-			transfer_ammount(client_information);
-			break;
-		case 3:
-			shutdown_server(client_information);
-			break;
-		default:
-			printf("Invalid operation.\n");
-	}
+	char pid[6];
+	sprintf(pid, "%d", getpid());
+	char fifo_name[20];
+	strcpy(fifo_name,"/tmp/secure_");
+	strcat(fifo_name, pid);
+
+	mkfifo(fifo_name, 0666);
 
 	free_client_information(client_information);
 
