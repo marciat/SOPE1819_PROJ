@@ -29,6 +29,14 @@ void free_server_information(server_inf* server_information);
 
 void free_client_information(client_inf* client_information);
 
+void create_account(client_inf* client_information);
+		
+void check_balance(client_inf* client_information);
+		
+void transfer_ammount(client_inf* client_information);
+			
+void shutdown_server(client_inf* client_information);
+
 #define READ 0
 #define WRITE 1
 

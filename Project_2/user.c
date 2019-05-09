@@ -74,6 +74,23 @@ int main(int argc, char* argv[]){
 
 	parse_client_inf(argv, client_information);
 
+	switch(client_information->operation){
+		case 0:
+			create_account(client_information);
+			break;
+		case 1:
+			check_balance(client_information);
+			break;
+		case 2:
+			transfer_ammount(client_information);
+			break;
+		case 3:
+			shutdown_server(client_information);
+			break;
+		default:
+			printf("Invalid operation.\n");
+	}
+
 	free_client_information(client_information);
 
 
