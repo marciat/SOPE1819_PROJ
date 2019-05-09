@@ -21,7 +21,7 @@ void parse_server_inf(char* argv[], server_inf* inf);
 
 void parse_client_inf(char* argv[], client_inf* inf);
 
-void rem_quot(char* password, char* pass_with_quot);
+//void rem_quot(char* password, char* pass_with_quot);
 
 int check_number(char* number_bank_offices);
 
