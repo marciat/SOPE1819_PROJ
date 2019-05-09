@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <pthread.h>
 
 //Given header files
 #include "types.h"
@@ -10,6 +11,13 @@
 //Header files created by us
 #include "server.h"
 #include "parse.h"
+
+pthread_t* threads;
+
+void* bank_office(void* attr){
+	attr = (void*)attr;
+	return NULL;
+}
 
 int main(int argc, char* argv[]){
 	setbuf(stdout, NULL);
@@ -26,7 +34,7 @@ int main(int argc, char* argv[]){
 		exit(-1);
 	}
 
-	if(strlen(argv[2]) > 20 || strlen(argv[2]) < 8){
+	if(strlen(argv[2]) > MAX_PASSWORD_LEN || strlen(argv[2]) < MIN_PASSWORD_LEN){
 		printf("Password length must be between 8 to 20 characters.\n");
 		exit(-2);
 	}
@@ -36,7 +44,7 @@ int main(int argc, char* argv[]){
 		exit(-3);
 	}
 
-	if(atoi(argv[1]) > 99 || atoi(argv[1]) < 1 || strlen(argv[1]) > 9){
+	if(atoi(argv[1]) > MAX_BANK_OFFICES || atoi(argv[1]) < 1 || strlen(argv[1]) > 9){
 		printf("Number of bank offices must be between 1 and 99.\n");
 		exit(-4);
 	}
@@ -45,7 +53,26 @@ int main(int argc, char* argv[]){
 
 	parse_server_inf(argv, server_information);
 
+	threads = malloc(sizeof(pthread_t)*server_information->num_bank_offices); 
+
+	for(int i = 1; i <= server_information->num_bank_offices; i++){
+		pthread_t tid = i;
+		if(pthread_create(&tid, NULL, bank_office, NULL)){
+			perror("pthread_create");
+			exit(-1);
+		}
+		threads[i-1] = tid;
+	}
+
+	for(int i = 0; i < server_information->num_bank_offices; i++){ //Joining all threads before exiting
+		if(pthread_join(threads[i], NULL)){
+			perror("pthread_join");
+			exit(-1);
+		}
+	}
+
 	free_server_information(server_information);
+	free(threads);
 
 	return 0;
 }

@@ -36,7 +36,7 @@ int main(int argc, char* argv[]){
 		exit(-3);
 	}
 
-	if(strlen(argv[2]) > 20 || strlen(argv[2]) < 8){
+	if(strlen(argv[2]) > MAX_PASSWORD_LEN || strlen(argv[2]) < MIN_PASSWORD_LEN){
 		printf("Password length must be between 8 to 20 characters.\n");
 		exit(-4);
 	}
