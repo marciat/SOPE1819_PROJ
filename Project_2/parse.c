@@ -84,27 +84,16 @@ void parse_server_inf(char* argv[], server_inf* inf){
 	}
 }
 
-
 void parse_client_inf(char* argv[], client_inf* inf){
-	inf->password_conta = malloc(MAX_PASSWORD_LEN+1);
-	inf->args_operacao = malloc(100);
+	inf->account_password = malloc(MAX_PASSWORD_LEN+1);
+	inf->operation_arguments = malloc(100);
 
-	inf->id_conta = atoi(argv[1]);
-	inf->password_conta = argv[2];
-	inf->atraso_operacao = atoi(argv[3]);
-	inf->operacao_realizar = atoi(argv[4]);
-	inf->args_operacao = argv[5];
+	inf->account_id = atoi(argv[1]);
+	inf->account_password = argv[2];
+	inf->operation_delay = atoi(argv[3]);
+	inf->operation = atoi(argv[4]);
+	inf->operation_arguments = argv[5];
 
-}
-
-void salt_generator(char* salt){
-	char string[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-
-	for(int i = 0; i < SALT_LEN; i++){
-		salt[i] = string[rand() % (strlen(string))];
-	}
-
-	salt[SALT_LEN] = '\0';
 }
 
 void rem_quot(char* password, char* pass_with_quot){

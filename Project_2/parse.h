@@ -10,18 +10,16 @@ typedef struct {
 } server_inf;
 
 typedef struct {
-	int id_conta;
-	char* password_conta;
-	int atraso_operacao;
-	int operacao_realizar;
-	char* args_operacao;
+	int account_id;
+	char* account_password;
+	int operation_delay;
+	int operation;
+	char* operation_arguments;
 } client_inf;
 
 void parse_server_inf(char* argv[], server_inf* inf);
 
 void parse_client_inf(char* argv[], client_inf* inf);
-
-void salt_generator(char* salt);
 
 void rem_quot(char* password, char* pass_with_quot);
 
