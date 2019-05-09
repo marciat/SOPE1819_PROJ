@@ -6,7 +6,7 @@
 typedef struct {
 	int num_bank_offices;
 	char* admin_password;
-	char* salt;
+	//char* salt;
 } server_inf;
 
 typedef struct {

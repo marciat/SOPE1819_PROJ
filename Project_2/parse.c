@@ -12,14 +12,14 @@
 
 void parse_server_inf(char* argv[], server_inf* inf){
 	inf->num_bank_offices = atoi(argv[1]);
-	inf->salt = malloc(SALT_LEN+1);
-	inf->admin_password = malloc(HASH_LEN+1);
+	//inf->salt = malloc(SALT_LEN+1);
+	size_t password_length = sizeof(argv[2])*sizeof(char);
+	inf->admin_password = malloc(password_length);
+	inf->admin_password = memcpy(inf->admin_password, argv[2], password_length);
 
-	salt_generator(inf->salt);
+	//salt_generator(inf->salt);
 
-	char* password = malloc(sizeof(argv[2]));
-
-	//rem_quot(password, argv[2]);
+	/*char* password = malloc(sizeof(argv[2]));
 
 	int fd[2], fork_value;
 
@@ -81,7 +81,7 @@ void parse_server_inf(char* argv[], server_inf* inf){
 		waitpid(fork_value, NULL, 0);
 		while(read(fd[READ], inf->admin_password, HASH_LEN) == 0);
 		close(fd[READ]);
-	}
+	}*/
 }
 
 void parse_client_inf(char* argv[], client_inf* inf){
@@ -96,21 +96,15 @@ void parse_client_inf(char* argv[], client_inf* inf){
 
 }
 
-void rem_quot(char* password, char* pass_with_quot){
-	for(int i = 1; i < (int)strlen(pass_with_quot)-1; i++){
-		password[i] = pass_with_quot[i];
-	}
-}
-
 void free_server_information(server_inf* server_information){
 	free(server_information->admin_password);
-	free(server_information->salt);
+	//free(server_information->salt);
 	free(server_information);
 }
 
 void free_client_information(client_inf* client_information){
-	free(client_information->password_conta);
-	free(client_information->args_operacao);
+	free(client_information->account_password);
+	free(client_information->operation_arguments);
 	free(client_information);
 }
 
