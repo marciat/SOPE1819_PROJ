@@ -350,29 +350,43 @@ char* subst_null_by_endline(char* string){ //This function will only be called b
 void create_account_storage(){
 	int fd = open(ACCOUNT_LIST, O_CREAT, 0777);
 	if(fd < 0){
+		perror("open");
 		exit(-5);
 	}
-	close(fd);
+	if(close(fd)){
+		perror("close");
+		exit(-5);
+	}
 }
 
 void print_account_to_file(bank_account_t *account){
 
 	int fd = open(ACCOUNT_LIST, O_WRONLY, 0777);
 	if(fd < 0){
+		perror("open");
 		exit(-5);
 	}
 
-	FILE *account_list = fdopen(fd, "w");
-	if(account_list == NULL){
-		exit(-6);
-	}
 
 	char* account_info = malloc(WIDTH_ID+WIDTH_BALANCE+SALT_LEN+HASH_LEN);
-	sprintf(account_info, "%d %d %s %s\n", account->account_id, account->balance, account->salt, account->hash);
-	fprintf(account_list,"%s",account_info);	
+	sprintf(account_info, "%d\n%d\n%s\n%s\n", account->account_id, account->balance, account->salt, account->hash);
+
+	if(pthread_mutex_lock(&save_account_mutex)){
+		perror("pthread_mutex_lock");
+		exit(-1);
+	}
+
+	if(write(fd, account_info, strlen(account_info)) < 0){
+		perror("write");
+		exit(-1);
+	}
+
+	if(pthread_mutex_unlock(&save_account_mutex)){
+		perror("pthread_mutex_unlock");
+		exit(-1);
+	}
+
 	free(account_info);
 
 	close(fd);
-	fclose(account_list);
-
 }
