@@ -346,3 +346,33 @@ char* subst_null_by_endline(char* string){ //This function will only be called b
 	new_string[HASH_LEN] = '\n';
 	return new_string;
 }
+
+void create_account_storage(){
+	int fd = open(ACCOUNT_LIST, O_CREAT, 0777);
+	if(fd < 0){
+		exit(-5);
+	}
+	close(fd);
+}
+
+void print_account_to_file(bank_account_t *account){
+
+	int fd = open(ACCOUNT_LIST, O_WRONLY, 0777);
+	if(fd < 0){
+		exit(-5);
+	}
+
+	FILE *account_list = fdopen(fd, "w");
+	if(account_list == NULL){
+		exit(-6);
+	}
+
+	char* account_info = malloc(WIDTH_ID+WIDTH_BALANCE+SALT_LEN+HASH_LEN);
+	sprintf(account_info, "%d %d %s %s\n", account->account_id, account->balance, account->salt, account->hash);
+	fprintf(account_list,"%s",account_info);	
+	free(account_info);
+
+	close(fd);
+	fclose(account_list);
+
+}

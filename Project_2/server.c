@@ -58,17 +58,9 @@ int main(int argc, char* argv[]){
 
 	bank_account_t *admin_account = create_admin_account(argv[2]);
 
-	int fd = open("accounts.txt", O_RDWR | O_CREAT, 0777);
-	if(fd < 0){
-		exit(-5);
-	}
+	create_account_storage();
 
-	FILE *fp = fdopen(fd, "rw");
-	if(fp == NULL){
-		exit(-6);
-	}
-
-	
+	print_account_to_file(admin_account);	
 
 	if(pthread_mutex_init(&save_account_mutex, NULL)){
 		perror("pthread_mutex_init");
@@ -77,7 +69,7 @@ int main(int argc, char* argv[]){
 
 	threads = malloc(sizeof(pthread_t)*num_bank_offices); 
 
-	mkfifo("/tmp/secure_srv", 0666);
+	mkfifo(SERVER_FIFO_PATH, 0666);
 
 	for(int i = 1; i <= num_bank_offices; i++){
 		pthread_t tid = i;

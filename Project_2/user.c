@@ -80,8 +80,8 @@ int main(int argc, char* argv[]){
 
 	char pid[6];
 	sprintf(pid, "%d", getpid());
-	char fifo_name[20];
-	strcpy(fifo_name,"/tmp/secure_");
+	char fifo_name[USER_FIFO_PATH_LEN];
+	strcpy(fifo_name, USER_FIFO_PATH_PREFIX);
 	strcat(fifo_name, pid);
 
 	mkfifo(fifo_name, 0666);

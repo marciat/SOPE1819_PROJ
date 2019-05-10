@@ -21,6 +21,10 @@ void save_account(bank_account_t* account);
 
 char* subst_null_by_endline(char* string);
 
+void create_account_storage();
+
+void print_account_to_file(bank_account_t *account);
+
 pthread_mutex_t save_account_mutex;
 
 #endif
