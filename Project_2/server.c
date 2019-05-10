@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <pthread.h>
+//#include <pthread.h>
 
 //Given header files
 #include "types.h"
@@ -11,6 +11,7 @@
 //Header files created by us
 #include "server.h"
 #include "parse.h"
+#include "account.h"
 
 pthread_t* threads;
 
@@ -52,6 +53,11 @@ int main(int argc, char* argv[]){
 	server_inf* server_information = malloc(sizeof(server_inf));
 
 	parse_server_inf(argv, server_information);
+
+	if(pthread_mutex_init(save_account_mutex, NULL)){
+		perror("pthread_mutex_init");
+		exit(-1);
+	}
 
 	threads = malloc(sizeof(pthread_t)*server_information->num_bank_offices); 
 
