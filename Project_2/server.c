@@ -2,6 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 //#include <pthread.h>
 
 //Given header files
@@ -50,19 +54,32 @@ int main(int argc, char* argv[]){
 		exit(-4);
 	}
 
-	server_inf* server_information = malloc(sizeof(server_inf));
+	int num_bank_offices = atoi(argv[1]);
 
-	parse_server_inf(argv, server_information);
+	bank_account_t *admin_account = create_admin_account(argv[2]);
 
+	int fd = open("accounts.txt", O_RDWR | O_CREAT, 0777);
+	if(fd < 0){
+		exit(-5);
+	}
+
+	FILE *fp = fdopen(fd, "rw");
+	if(fp == NULL){
+		exit(-6);
+	}
+
+	
 
 	if(pthread_mutex_init(&save_account_mutex, NULL)){
 		perror("pthread_mutex_init");
 		exit(-1);
 	}
 
-	threads = malloc(sizeof(pthread_t)*server_information->num_bank_offices); 
+	threads = malloc(sizeof(pthread_t)*num_bank_offices); 
 
-	for(int i = 1; i <= server_information->num_bank_offices; i++){
+	mkfifo("/tmp/secure_srv", 0666);
+
+	for(int i = 1; i <= num_bank_offices; i++){
 		pthread_t tid = i;
 		if(pthread_create(&tid, NULL, bank_office, NULL)){
 			perror("pthread_create");
@@ -71,14 +88,13 @@ int main(int argc, char* argv[]){
 		threads[i-1] = tid;
 	}
 
-	for(int i = 0; i < server_information->num_bank_offices; i++){ //Joining all threads before exiting
+	for(int i = 0; i < num_bank_offices; i++){ //Joining all threads before exiting
 		if(pthread_join(threads[i], NULL)){
 			perror("pthread_join");
 			exit(-1);
 		}
 	}
 
-	free_server_information(server_information);
 	free(threads);
 
 	return 0;

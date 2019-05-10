@@ -10,13 +10,6 @@
 #include "parse.h"
 #include "constants.h"
 
-void parse_server_inf(char* argv[], server_inf* inf){
-	inf->num_bank_offices = atoi(argv[1]);
-	size_t password_length = sizeof(argv[2])*sizeof(char);
-	inf->admin_password = malloc(password_length);
-	inf->admin_password = memcpy(inf->admin_password, argv[2], password_length);
-}
-
 void parse_client_inf(char* argv[], client_inf* inf){
 	inf->account_password = malloc(MAX_PASSWORD_LEN+1);
 	inf->operation_arguments = malloc(100);
@@ -26,12 +19,6 @@ void parse_client_inf(char* argv[], client_inf* inf){
 	inf->operation_delay = atoi(argv[3]);
 	inf->operation = atoi(argv[4]);
 	strcpy(inf->operation_arguments, argv[5]);
-}
-
-void free_server_information(server_inf* server_information){
-	free(server_information->admin_password);
-	//free(server_information->salt);
-	free(server_information);
 }
 
 void free_client_information(client_inf* client_information){

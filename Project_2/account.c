@@ -1,8 +1,16 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
+#include <fcntl.h>
 
 #include "account.h"
+#include "constants.h"
+#include "types.h"
 
 void salt_generator(char* salt){
 	char string[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -23,7 +31,78 @@ bank_account_t* create_client_account(client_inf* client_information){
 
 	//Creating hash
 	char* password = malloc(strlen(client_information->account_password)+strlen(account->salt));
-	password = memcpy(password, client_information->account_password);
+	strcpy(password, client_information->account_password);
+	int fd[2], fork_value;
+
+	if(pipe(fd)){
+		perror("pipe");
+		exit(-1);
+	}
+
+	if((fork_value = fork()) == -1){
+		perror("fork");
+		exit(-1);
+	}
+	else if(fork_value == 0){
+		if(dup2(fd[WRITE], STDOUT_FILENO) == -1){
+			perror("dup2");
+			exit(-1);
+		}
+
+		int new_fd[2];
+
+		if(pipe(new_fd)){
+			perror("pipe");
+			exit(-1);
+		} 
+
+		if((fork_value = fork()) == -1){
+			perror("fork");
+			exit(-1);
+		}
+		else if(fork_value == 0){
+			close(new_fd[READ]);
+			if(dup2(new_fd[WRITE], STDOUT_FILENO) == -1){
+				perror("dup2");
+				exit(-1);
+			}
+			execlp("echo", "echo", strcat(password, account->salt), NULL);
+			printf("ERROR!!!\n");
+			close(new_fd[WRITE]);
+			exit(-1);
+		}
+
+		close(new_fd[WRITE]);
+		waitpid(fork_value, NULL, 0);
+		
+		dup2(new_fd[READ], STDIN_FILENO);
+
+		execlp("sha256sum", "sha256sum", NULL);
+		printf("ERROR!!!\n");
+        close(fd[WRITE]);
+        exit(-1);
+	}
+	else{
+		close(fd[WRITE]);
+		waitpid(fork_value, NULL, 0);
+		while(read(fd[READ], account->hash, HASH_LEN) == 0);
+		close(fd[READ]);
+	}
+
+	account->balance = 0;
+
+	return account; //Probably this don't works
+}
+
+bank_account_t* create_admin_account(char* admin_password){
+	bank_account_t* account = (bank_account_t*)malloc(sizeof(bank_account_t));
+
+	account->account_id = ADMIN_ACCOUNT_ID;
+	salt_generator(account->salt);
+
+	//Creating hash
+	char* password = malloc(strlen(admin_password)+strlen(account->salt));
+	strcpy(password, admin_password);
 	int fd[2], fork_value;
 
 	if(pipe(fd)){
@@ -87,7 +166,7 @@ bank_account_t* create_client_account(client_inf* client_information){
 }
 
 void money_transfer(uint32_t account_id, char* password, uint32_t new_account_id, uint32_t balance){
-	if(pthread_mutex_lock(save_account_mutex)){
+	if(pthread_mutex_lock(&save_account_mutex)){
 		perror("pthread_mutex_lock");
 		exit(-1);
 	}
@@ -101,16 +180,16 @@ void money_transfer(uint32_t account_id, char* password, uint32_t new_account_id
 	char* string = malloc(sizeof(uint32_t)+sizeof(char)); //The biggest string stored in the file has this length
 	bank_account_t tmp_account, account, new_account;
 
-	account.id = 0; new_account.id = 0; //Initialize variables to check if they exist later
+	account.account_id = 0; new_account.account_id = 0; //Initialize variables to check if they exist later
 
 	while(read(fd, string, sizeof(uint32_t)+sizeof(char)) > 0){
-		tmp_account.account_id = stoi(string);
+		tmp_account.account_id = atoi(string);
 		read(fd, tmp_account.hash, HASH_LEN+1);
 		read(fd, tmp_account.salt, HASH_LEN+1);
 		memset(string, '\0', sizeof(uint32_t)+sizeof(char));
-		tmp_account.balance = stoi(string);
+		tmp_account.balance = atoi(string);
 
-		if(tmp_account.id == account_id){
+		if(tmp_account.account_id == account_id){
 			tmp_account.hash[HASH_LEN] = '\0';
 			tmp_account.salt[HASH_LEN] = '\0';
 			
@@ -151,7 +230,7 @@ void money_transfer(uint32_t account_id, char* password, uint32_t new_account_id
 						perror("dup2");
 						exit(-1);
 					}
-					execlp("echo", "echo", strcat(password, tmp_account->salt), NULL);
+					execlp("echo", "echo", strcat(password, tmp_account.salt), NULL);
 					printf("ERROR!!!\n");
 					close(new_fd[WRITE]);
 					exit(-1);
@@ -174,7 +253,7 @@ void money_transfer(uint32_t account_id, char* password, uint32_t new_account_id
 				close(fd[READ]);
 			}
 			
-			if(strcmp(hash, tmp_account->hash) == 0){ //Found first account
+			if(strcmp(hash, tmp_account.hash) == 0){ //Found first account
 				account = tmp_account;
 				if(account.balance < balance){
 					free(hash);
@@ -192,17 +271,17 @@ void money_transfer(uint32_t account_id, char* password, uint32_t new_account_id
 
 			free(hash);
 		}
-		else if(tmp_account.id == new_account_id){
+		else if(tmp_account.account_id == new_account_id){
 			new_account = tmp_account;
 		}
 
-		if(account.id != 0 && new_account.id != 0)
+		if(account.account_id != 0 && new_account.account_id != 0)
 			break;
 	}
 
 	free(string);
 
-	if(account.id == 0 || new_account.id == 0){
+	if(account.account_id == 0 || new_account.account_id == 0){
 		write(STDOUT_FILENO, "OPERATION FAILED: Account Does Not Exist!!!\n", 44);
 	}
 
@@ -214,14 +293,14 @@ void money_transfer(uint32_t account_id, char* password, uint32_t new_account_id
 
 	//FIND ACCOUNTS AND TRANSFER THE MONEY
 
-	if(pthread_mutex_unlock(save_account_mutex)){
+	if(pthread_mutex_unlock(&save_account_mutex)){
 		perror("pthread_mutex_unlock");
 		exit(-1);
 	}
 }
 
 void save_account(bank_account_t* account){
-	if(pthread_mutex_lock(save_account_mutex)){
+	if(pthread_mutex_lock(&save_account_mutex)){
 		perror("pthread_mutex_lock");
 		exit(-1);
 	}
@@ -255,7 +334,7 @@ void save_account(bank_account_t* account){
 		exit(-1);
 	}
 
-	if(pthread_mutex_unlock(save_account_mutex)){
+	if(pthread_mutex_unlock(&save_account_mutex)){
 		perror("pthread_mutex_unlock");
 		exit(-1);
 	}

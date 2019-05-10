@@ -5,8 +5,11 @@
 #include <pthread.h>
 
 #include "parse.h"
+#include "types.h"
 
 bank_account_t* create_client_account(client_inf* client_information);
+
+bank_account_t* create_admin_account(char* admin_password);
 
 void inquiry_balance(uint32_t account_id, char* password);
 
