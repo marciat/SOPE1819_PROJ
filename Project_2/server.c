@@ -54,7 +54,8 @@ int main(int argc, char* argv[]){
 
 	parse_server_inf(argv, server_information);
 
-	if(pthread_mutex_init(save_account_mutex, NULL)){
+
+	if(pthread_mutex_init(&save_account_mutex, NULL)){
 		perror("pthread_mutex_init");
 		exit(-1);
 	}

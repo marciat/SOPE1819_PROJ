@@ -70,7 +70,7 @@ int main(int argc, char* argv[]){
 	if(atoi(argv[4]) == 0 || atoi(argv[4]) == 2){
 		if(strlen(argv[5]) == 0){
 			printf("Operations 0 and 2 require a non empty argument list.\n");
-			exit(-8);
+			exit(-9);
 		}
 	}	
 
@@ -86,8 +86,9 @@ int main(int argc, char* argv[]){
 
 	mkfifo(fifo_name, 0666);
 
-	free_client_information(client_information);
+	//printf("%d, %s, %d, %d, %s.\n", client_information->account_id, client_information->account_password, client_information->operation_delay, client_information->operation, client_information->operation_arguments);
 
+	free_client_information(client_information);
 
 	return 0;
 }

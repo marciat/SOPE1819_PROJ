@@ -22,11 +22,10 @@ void parse_client_inf(char* argv[], client_inf* inf){
 	inf->operation_arguments = malloc(100);
 
 	inf->account_id = atoi(argv[1]);
-	inf->account_password = argv[2];
+	strcpy(inf->account_password, argv[2]);
 	inf->operation_delay = atoi(argv[3]);
 	inf->operation = atoi(argv[4]);
-	inf->operation_arguments = argv[5];
-
+	strcpy(inf->operation_arguments, argv[5]);
 }
 
 void free_server_information(server_inf* server_information){

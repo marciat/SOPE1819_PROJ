@@ -18,6 +18,6 @@ void save_account(bank_account_t* account);
 
 char* subst_null_by_endline(char* string);
 
-pthread_mutex_t* save_account_mutex;
+pthread_mutex_t save_account_mutex;
 
 #endif
