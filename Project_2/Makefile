@@ -1,10 +1,13 @@
 all: user server
 
-user: user.c
-	gcc -o user user.c -c -Wall -Wextra -Werror
+user: user.o parse.o
+	gcc -o user user.o parse.o -Wall -Wextra -Werror
 
 server: server.o parse.o
 	gcc -o server server.o parse.o -D_REENTRANT -lpthread
+
+user.o: user.c
+	gcc -o user.o user.c -c -Wall -Wextra -Werror
 
 server.o: server.c
 	gcc -o server.o server.c -D_REENTRANT -lpthread -c -Wall -Wextra -Werror
