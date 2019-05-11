@@ -207,6 +207,10 @@ void money_transfer(uint32_t account_id, char* password, uint32_t new_account_id
 					free(hash);
 					free(string);
 					write(STDOUT_FILENO, "OPERATION FAILED: Insufficient Money!!!\n", 40);
+					if(pthread_mutex_unlock(&save_account_mutex)){
+						perror("pthread_mutex_unlock");
+						exit(-1);
+					}
 					return;
 				}
 			}
@@ -214,6 +218,10 @@ void money_transfer(uint32_t account_id, char* password, uint32_t new_account_id
 				free(hash);
 				free(string);
 				write(STDOUT_FILENO, "OPERATION FAILED: Invalid Password!!!\n", 38);
+				if(pthread_mutex_unlock(&save_account_mutex)){
+					perror("pthread_mutex_unlock");
+					exit(-1);
+				}
 				return;				
 			}
 
@@ -250,13 +258,17 @@ void money_transfer(uint32_t account_id, char* password, uint32_t new_account_id
 
 uint32_t check_balance(uint32_t account_id, char* password){
 
-	if(account_id == 0){
-		return RC_OP_NALLOW;
-	}
-
 	if(pthread_mutex_lock(&save_account_mutex)){
 		perror("pthread_mutex_lock");
 		exit(-1);
+	}
+
+	if(account_id == 0){
+		if(pthread_mutex_unlock(&save_account_mutex)){
+			perror("pthread_mutex_unlock");
+			exit(-1);
+		}
+		return RC_OP_NALLOW;
 	}
 
 	int fd = open("accounts.txt", O_RDONLY);
@@ -285,10 +297,19 @@ uint32_t check_balance(uint32_t account_id, char* password){
 			//Creating hash
 			char* hash = malloc(HASH_LEN+1);
 			get_hash(password, tmp_account.salt, hash);
-			free(hash);
+
+			if(hash == tmp_account.hash){
+				free(hash);
+				break;
+			}else{
+				free(hash);
+				if(pthread_mutex_unlock(&save_account_mutex)){
+					perror("pthread_mutex_unlock");
+					exit(-1);
+				}
+				return RC_OTHER;
+			}
 		}
-
-
 	}
 
 	free(string);
