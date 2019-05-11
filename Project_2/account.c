@@ -340,6 +340,12 @@ void create_account_storage(){
 	}
 }
 
+void delete_account_storage(){
+	if(unlink(ACCOUNT_LIST)){
+		perror("unlink");
+	}
+}
+
 void print_account_to_file(bank_account_t *account){
 
 	int fd = open(ACCOUNT_LIST, O_WRONLY | O_APPEND, 0777);

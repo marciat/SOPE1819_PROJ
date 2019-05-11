@@ -5,22 +5,37 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <stdbool.h>
 
 //#include <pthread.h>
 
 //Given header files
-#include "types.h"
 #include "constants.h"
 
 //Header files created by us
 #include "server.h"
-#include "parse.h"
 #include "account.h"
+#include "fifo.h"
 
 pthread_t* threads;
 
 void* bank_office(void* attr){
-	attr = (void*)attr;
+	int srv_fifo = *(int*)attr;
+
+	while(true){
+		char* user_inf = malloc(sizeof(char)+3*sizeof(int)+MAX_PASSWORD_LEN+255);
+		read_srv_fifo(srv_fifo, user_inf);
+
+		uint32_t account_id, operation_delay, operation;
+		char* password = malloc(MAX_PASSWORD_LEN);
+		char* operation_arguments = malloc(255);
+		sscanf(user_inf, "%u %s %u %u %s\n", &account_id, password, &operation_delay, &operation, operation_arguments);
+		
+		free(password);
+		free(operation_arguments);
+		free(user_inf);
+	}
+
 	return NULL;
 }
 
@@ -75,9 +90,15 @@ int main(int argc, char* argv[]){
 		exit(-1);
 	}
 
+	int srv_fifo = open(SERVER_FIFO_PATH, O_RDONLY);
+	if(srv_fifo < 0){
+		perror("open server fifo");
+		exit(-1);
+	}
+
 	for(int i = 1; i <= num_bank_offices; i++){
 		pthread_t tid = i;
-		if(pthread_create(&tid, NULL, bank_office, NULL)){
+		if(pthread_create(&tid, NULL, bank_office, &srv_fifo)){
 			perror("pthread_create");
 			exit(-1);
 		}
@@ -93,10 +114,16 @@ int main(int argc, char* argv[]){
 
 	free(threads);
 
+	if(close(srv_fifo)){
+		perror("close server fifo");
+	}
+
 	if(unlink(SERVER_FIFO_PATH)){
 		perror("unlink");
 		exit(-1);
 	}
+
+	delete_account_storage();
 
 	return 0;
 }
@@ -112,4 +139,25 @@ void server_help(){
 
 	printf("admin_password:\n");
 	printf("	This argument represents the administrator password. This have to be between quotation marks.\n");
+}
+
+void read_srv_fifo(int srv_fifo, char* inf){
+	if(pthread_mutex_lock(&srv_mutex)){
+		perror("pthread_mutex_lock");
+	}
+
+	int read_value;
+
+	while((read_value = read(srv_fifo, inf, sizeof(char)+3*sizeof(int)+MAX_PASSWORD_LEN+255)) == 0){
+		if(read_value < 0){
+			perror("read server fifo");
+		}
+		if(pthread_cond_wait(&srv_cond, &srv_mutex)){
+			perror("pthread_cond_wait");
+		}
+	}
+
+	if(pthread_mutex_unlock(&srv_mutex)){
+		perror("pthread_mutex_unlock");
+	}
 }

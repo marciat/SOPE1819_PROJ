@@ -12,6 +12,7 @@
 
 //Header files created by us
 #include "user.h"
+#include "fifo.h"
 
 int main(int argc, char* argv[]){
 	setbuf(stdout, NULL);
@@ -93,7 +94,7 @@ int main(int argc, char* argv[]){
 		exit(-1);
 	}
 
-	int srv_fifo = open(SERVER_FIFO_PATH, O_WRONLY); //Opening server FIFO for writing
+	int srv_fifo = open(SERVER_FIFO_PATH, O_WRONLY | O_APPEND); //Opening server FIFO for writing
 	if(srv_fifo < 0){
 		perror("open server fifo");
 		exit(-1);

@@ -4,4 +4,6 @@
 
 void server_help();
 
+void read_srv_fifo(int srv_fifo, char* inf);
+
 #endif
