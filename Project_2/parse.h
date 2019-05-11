@@ -13,8 +13,6 @@ typedef struct {
 
 void parse_client_inf(char* argv[], client_inf* inf);
 
-//void rem_quot(char* password, char* pass_with_quot);
-
 int check_number(char* number_bank_offices);
 
 void free_client_information(client_inf* client_information);

@@ -12,7 +12,6 @@
 
 //Header files created by us
 #include "user.h"
-#include "parse.h"
 
 int main(int argc, char* argv[]){
 	setbuf(stdout, NULL);
@@ -89,11 +88,43 @@ int main(int argc, char* argv[]){
 	strcpy(fifo_name, USER_FIFO_PATH_PREFIX);
 	strcat(fifo_name, pid);
 
-	mkfifo(fifo_name, 0666);
+	if(mkfifo(fifo_name, 0666)){
+		perror("mkfifo");
+		exit(-1);
+	}
 
-	//printf("%d, %s, %d, %d, %s.\n", client_information->account_id, client_information->account_password, client_information->operation_delay, client_information->operation, client_information->operation_arguments);
+	int srv_fifo = open(SERVER_FIFO_PATH, O_WRONLY); //Opening server FIFO for writing
+	if(srv_fifo < 0){
+		perror("open server fifo");
+		exit(-1);
+	}
+
+	write_srv_fifo(srv_fifo, client_information);
+
+	if(close(srv_fifo)){
+		perror("close server fifo");
+		exit(-1);
+	}
+
+	int user_fifo = open(fifo_name, O_RDONLY);
+	if(user_fifo < 0){
+		perror("open user fifo");
+		exit(-1);
+	}
+
+	//read_user_fifo()
+
+	if(close(user_fifo)){
+		perror("close user fifo");
+		exit(-1);
+	}
 
 	free_client_information(client_information);
+
+	if(unlink(fifo_name)){
+		perror("unlink");
+		exit(-1);
+	}
 
 	return 0;
 }
@@ -125,4 +156,16 @@ void user_help(){
 
 	printf("list_of_arguments:\n");
 	printf("	Arguments requested by the operation.\n");
+}
+
+void write_srv_fifo(int srv_fifo, client_inf* inf){
+	char* client_string = malloc(sizeof(char)+3*sizeof(int)+strlen(inf->account_password)+strlen(inf->operation_arguments));	 
+	sprintf(client_string, "%d %s %d %d %s\n", inf->account_id, inf->account_password, inf->operation_delay, inf->operation, inf->operation_arguments);
+	
+	if(write(srv_fifo, client_string, strlen(client_string)) < 0){
+		perror("write");
+		exit(-1);
+	}
+
+	free(client_string);	
 }

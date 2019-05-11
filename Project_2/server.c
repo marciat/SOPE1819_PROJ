@@ -70,7 +70,10 @@ int main(int argc, char* argv[]){
 
 	threads = malloc(sizeof(pthread_t)*num_bank_offices); 
 
-	mkfifo(SERVER_FIFO_PATH, 0666);
+	if(mkfifo(SERVER_FIFO_PATH, 0666)){
+		perror("mkfifo");
+		exit(-1);
+	}
 
 	for(int i = 1; i <= num_bank_offices; i++){
 		pthread_t tid = i;
@@ -89,6 +92,11 @@ int main(int argc, char* argv[]){
 	}
 
 	free(threads);
+
+	if(unlink(SERVER_FIFO_PATH)){
+		perror("unlink");
+		exit(-1);
+	}
 
 	return 0;
 }
