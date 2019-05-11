@@ -35,6 +35,11 @@ int main(int argc, char* argv[]){
 		exit(-2);
 	}
 
+	if(atoi(argv[1]) < 0 || atoi(argv[1]) > MAX_BANK_ACCOUNTS){
+		printf("Account ID must be between 0 and %d", MAX_BANK_ACCOUNTS);
+		exit(-3);
+	}
+
 	if(strlen(argv[1]) > 9){
 		printf("Account ID cannot have more than 9 digits.\n");
 		exit(-3);

@@ -177,16 +177,16 @@ void money_transfer(uint32_t account_id, char* password, uint32_t new_account_id
 		exit(-1);
 	}
 
-	char* string = malloc(sizeof(uint32_t)+sizeof(char)); //The biggest string stored in the file has this length
+	char* string = malloc(WIDTH_ID); 
 	bank_account_t tmp_account, account, new_account;
 
 	account.account_id = 0; new_account.account_id = 0; //Initialize variables to check if they exist later
 
-	while(read(fd, string, sizeof(uint32_t)+sizeof(char)) > 0){
+	while(read(fd, string, WIDTH_ID) > 0){
 		tmp_account.account_id = atoi(string);
 		read(fd, tmp_account.hash, HASH_LEN+1);
 		read(fd, tmp_account.salt, HASH_LEN+1);
-		memset(string, '\0', sizeof(uint32_t)+sizeof(char));
+		memset(string, '\0', WIDTH_ID);
 		tmp_account.balance = atoi(string);
 
 		if(tmp_account.account_id == account_id){
@@ -299,52 +299,34 @@ void money_transfer(uint32_t account_id, char* password, uint32_t new_account_id
 	}
 }
 
-void save_account(bank_account_t* account){
+void check_balance(uint32_t account_id, char* password){
+
 	if(pthread_mutex_lock(&save_account_mutex)){
 		perror("pthread_mutex_lock");
 		exit(-1);
 	}
-	//Critical Section
-	int fd = open("accounts.txt", O_WRONLY | O_APPEND);
+
+	int fd = open("accounts.txt", O_RDONLY);
 	if(fd < 0){
 		perror("open");
 		exit(-1);
 	}
-	
-	char* uint32_string = malloc(sizeof(uint32_t)+sizeof(char));
-	sprintf(uint32_string, "%d\n", account->account_id);
-	write(fd, uint32_string, strlen(uint32_string));
-	
-	char* string = subst_null_by_endline(account->hash);
-	write(fd, string, HASH_LEN+1);
-	free(string);
 
-	string = subst_null_by_endline(account->salt);
-	write(fd, string, HASH_LEN+1);
-	free(string);
-
-	memset(uint32_string, '\0', sizeof(uint32_t)+sizeof(char));
-	sprintf(uint32_string, "%d\n", account->balance);
-	write(fd, uint32_string, strlen(uint32_string));
-
-	free(uint32_string);
+	account_id = 1;
+	password = "(void*) password";
+	if(strlen(password) < account_id){
+		printf("ola");
+	}
 
 	if(close(fd)){
 		perror("close");
 		exit(-1);
-	}
+	}	
 
 	if(pthread_mutex_unlock(&save_account_mutex)){
 		perror("pthread_mutex_unlock");
 		exit(-1);
 	}
-}
-
-char* subst_null_by_endline(char* string){ //This function will only be called by the account saver
-	char* new_string = malloc(HASH_LEN+1);
-	new_string = memcpy(new_string, string, HASH_LEN);
-	new_string[HASH_LEN] = '\n';
-	return new_string;
 }
 
 void create_account_storage(){
@@ -361,7 +343,7 @@ void create_account_storage(){
 
 void print_account_to_file(bank_account_t *account){
 
-	int fd = open(ACCOUNT_LIST, O_WRONLY, 0777);
+	int fd = open(ACCOUNT_LIST, O_WRONLY | O_APPEND, 0777);
 	if(fd < 0){
 		perror("open");
 		exit(-5);
@@ -369,7 +351,7 @@ void print_account_to_file(bank_account_t *account){
 
 
 	char* account_info = malloc(WIDTH_ID+WIDTH_BALANCE+SALT_LEN+HASH_LEN);
-	sprintf(account_info, "%d\n%d\n%s\n%s\n", account->account_id, account->balance, account->salt, account->hash);
+	sprintf(account_info, "%d\n%s\n%s\n%d\n", account->account_id, account->hash, account->salt, account->balance);
 
 	if(pthread_mutex_lock(&save_account_mutex)){
 		perror("pthread_mutex_lock");

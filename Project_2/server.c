@@ -61,6 +61,7 @@ int main(int argc, char* argv[]){
 	create_account_storage();
 
 	print_account_to_file(admin_account);	
+	print_account_to_file(admin_account);
 
 	if(pthread_mutex_init(&save_account_mutex, NULL)){
 		perror("pthread_mutex_init");
