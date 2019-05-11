@@ -75,8 +75,10 @@ int main(int argc, char* argv[]){
 
 	create_account_storage();
 
-	print_account_to_file(admin_account);	
 	print_account_to_file(admin_account);
+
+	//money_transfer(69, new_password, 43, 100);
+	//printf("%d\n",check_balance(69, new_password));	
 
 	if(pthread_mutex_init(&save_account_mutex, NULL)){
 		perror("pthread_mutex_init");
@@ -89,13 +91,12 @@ int main(int argc, char* argv[]){
 		perror("mkfifo");
 		exit(-1);
 	}
-
+/*
 	int srv_fifo = open(SERVER_FIFO_PATH, O_RDONLY);
 	if(srv_fifo < 0){
 		perror("open server fifo");
 		exit(-1);
 	}
-
 	for(int i = 1; i <= num_bank_offices; i++){
 		pthread_t tid = i;
 		if(pthread_create(&tid, NULL, bank_office, &srv_fifo)){
@@ -111,19 +112,19 @@ int main(int argc, char* argv[]){
 			exit(-1);
 		}
 	}
-
-	free(threads);
-
 	if(close(srv_fifo)){
 		perror("close server fifo");
 	}
+*/
+
+	free(threads);
 
 	if(unlink(SERVER_FIFO_PATH)){
 		perror("unlink");
 		exit(-1);
 	}
 
-	delete_account_storage();
+	//delete_account_storage();
 
 	return 0;
 }

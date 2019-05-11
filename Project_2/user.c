@@ -122,6 +122,8 @@ int main(int argc, char* argv[]){
 
 	free_client_information(client_information);
 
+	printf(fifo_name);
+
 	if(unlink(fifo_name)){
 		perror("unlink");
 		exit(-1);
@@ -135,7 +137,7 @@ void user_help(){
 	printf("			requested_delay operation_code\n");
 	printf("			\"argument_1\"...\n");
 	printf("Creates a homebanking server in your pc\n");
-	printf("Example: user 1 \"my_pass\" 3000 0 \"\"\n\n");
+	printf("Example: user 1 \"my_pass\" 3000 1 \"\"\n\n");
 
 	printf("id_account:\n"); 
 	printf("	Id of the user account.\n\n");

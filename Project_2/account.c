@@ -165,37 +165,48 @@ bank_account_t* create_admin_account(char* admin_password){
 	return account; //Probably this don't works
 }
 
-void money_transfer(uint32_t account_id, char* password, uint32_t new_account_id, uint32_t balance){
+void money_transfer(uint32_t account_id, char* password, uint32_t new_account_id, uint32_t amount){
 	if(pthread_mutex_lock(&save_account_mutex)){
 		perror("pthread_mutex_lock");
 		exit(-1);
 	}
 
-	int fd = open("accounts.txt", O_RDONLY);
-	if(fd < 0){
-		perror("open");
+	FILE* fp = fopen(ACCOUNT_LIST, "r+");
+
+	if(fp == NULL){
+		perror("fopen");
 		exit(-1);
 	}
 
+	size_t max_size = HASH_LEN;
+	char* tmp_hash = malloc(HASH_LEN);
+	char* tmp_salt = malloc(SALT_LEN);
 	char* string = malloc(WIDTH_ID); 
 	char* balance_string = malloc(WIDTH_BALANCE);
 	bank_account_t tmp_account, account, new_account;
 
 	account.account_id = 0; new_account.account_id = 0; //Initialize variables to check if they exist later
 
-	while(read(fd, string, WIDTH_ID) > 0){
+	while(getline(&string, &max_size, fp) > 0){
 		tmp_account.account_id = atoi(string);
-		read(fd, tmp_account.hash, HASH_LEN+1);
-		read(fd, tmp_account.salt, HASH_LEN+1);
 		memset(string, '\0', WIDTH_ID);
-		read(fd, balance_string, WIDTH_BALANCE+1);
-		tmp_account.balance = atoi(balance_string);
-		memset(balance_string, '\0', WIDTH_BALANCE+1);
 
-		if(tmp_account.account_id == account_id){
-			tmp_account.hash[HASH_LEN] = '\0';
-			tmp_account.salt[HASH_LEN] = '\0';
-			
+		getline(&tmp_hash, &max_size, fp);
+		tmp_hash[HASH_LEN] = '\0';
+		strcpy(tmp_account.hash, tmp_hash);
+		memset(tmp_hash, '\0', HASH_LEN);
+
+		getline(&tmp_salt, &max_size, fp);
+		tmp_salt[HASH_LEN] = '\0';
+		strcpy(tmp_account.salt, tmp_salt);
+		memset(tmp_salt, '\0', SALT_LEN);
+
+		getline(&balance_string, &max_size, fp);
+		tmp_account.balance = atoi(balance_string);
+		memset(balance_string, '\0', WIDTH_BALANCE);
+
+
+		if(tmp_account.account_id == account_id){			
 			//Creating hash
 			char* hash = malloc(HASH_LEN+1);
 
@@ -203,10 +214,17 @@ void money_transfer(uint32_t account_id, char* password, uint32_t new_account_id
 			
 			if(strcmp(hash, tmp_account.hash) == 0){ //Found first account
 				account = tmp_account;
-				if(account.balance < balance){
+				if(account.balance < amount){
 					free(hash);
 					free(string);
+					free(tmp_hash);
+					free(tmp_salt);
+					free(balance_string);
 					write(STDOUT_FILENO, "OPERATION FAILED: Insufficient Money!!!\n", 40);
+					if(fclose(fp)){
+						perror("close");
+						exit(-1);
+					}	
 					if(pthread_mutex_unlock(&save_account_mutex)){
 						perror("pthread_mutex_unlock");
 						exit(-1);
@@ -217,7 +235,14 @@ void money_transfer(uint32_t account_id, char* password, uint32_t new_account_id
 			else{
 				free(hash);
 				free(string);
+				free(tmp_hash);
+				free(tmp_salt);
+				free(balance_string);
 				write(STDOUT_FILENO, "OPERATION FAILED: Invalid Password!!!\n", 38);
+				if(fclose(fp)){
+					perror("close");
+					exit(-1);
+				}	
 				if(pthread_mutex_unlock(&save_account_mutex)){
 					perror("pthread_mutex_unlock");
 					exit(-1);
@@ -235,20 +260,102 @@ void money_transfer(uint32_t account_id, char* password, uint32_t new_account_id
 			break;
 	}
 
-	free(string);
-	free(balance_string);
 
 	if(account.account_id == 0 || new_account.account_id == 0){
 		write(STDOUT_FILENO, "OPERATION FAILED: Account Does Not Exist!!!\n", 44);
+		free(tmp_hash);
+		free(tmp_salt);
+		free(balance_string);
+		free(string);
+		if(fclose(fp)){
+			perror("close");
+			exit(-1);
+		}	
+
+		if(pthread_mutex_unlock(&save_account_mutex)){
+			perror("pthread_mutex_unlock");
+			exit(-1);
+		}
+		return;
 	}
 
-	if(close(fd)){
+	if(fclose(fp)){
 		perror("close");
 		exit(-1);
 	}	
+	
+	fp = fopen(ACCOUNT_LIST, "r+");
+	char* balance = malloc(WIDTH_BALANCE);
 
+	if(fp == NULL){
+		perror("fopen");
+		exit(-1);
+	}
 
-	//FIND ACCOUNTS AND TRANSFER THE MONEY
+	while(getline(&string, &max_size, fp) > 0){
+
+		tmp_account.account_id = atoi(string);
+		memset(string, '\0', WIDTH_ID);
+
+		getline(&tmp_hash, &max_size, fp);
+		tmp_hash[HASH_LEN] = '\0';
+		strcpy(tmp_account.hash, tmp_hash);
+		memset(tmp_hash, '\0', HASH_LEN);
+
+		getline(&tmp_salt, &max_size, fp);
+		tmp_salt[SALT_LEN] = '\0';
+		strcpy(tmp_account.salt, tmp_salt);
+		memset(tmp_salt, '\0', SALT_LEN);
+
+		memset(balance, ' ', WIDTH_BALANCE);
+		if(tmp_account.account_id == account.account_id){
+			
+			account.balance = account.balance - amount;
+
+			char* tmp_balance = malloc(WIDTH_BALANCE);
+			sprintf(tmp_balance, "%d", account.balance);
+
+			for(int i = 0; i < (int)strlen(tmp_balance); i++){
+				balance[i] = tmp_balance[i];
+			}
+
+			balance[WIDTH_BALANCE-1] = '\0';
+
+			free(tmp_balance);
+
+			fputs(balance,fp);
+		} 
+		if(tmp_account.account_id == new_account.account_id){
+			
+			new_account.balance = new_account.balance + amount;
+
+			char* tmp_balance = malloc(WIDTH_BALANCE);
+			sprintf(tmp_balance, "%d", new_account.balance);
+
+			for(int i = 0; i < (int)strlen(tmp_balance); i++){
+				balance[i] = tmp_balance[i];
+			}
+			balance[WIDTH_BALANCE-1] = '\0';
+
+			free(tmp_balance);
+
+			fputs(balance,fp);
+		}
+			
+		getline(&balance_string, &max_size, fp);
+		tmp_account.balance = atoi(balance_string);
+		memset(balance_string, '\0', WIDTH_BALANCE);
+	}
+
+	free(string);
+	free(balance_string);
+	free(tmp_salt);
+	free(tmp_hash);
+
+	if(fclose(fp)){
+		perror("close");
+		exit(-1);
+	}	
 
 	if(pthread_mutex_unlock(&save_account_mutex)){
 		perror("pthread_mutex_unlock");
@@ -271,24 +378,37 @@ uint32_t check_balance(uint32_t account_id, char* password){
 		return RC_OP_NALLOW;
 	}
 
-	int fd = open("accounts.txt", O_RDONLY);
-	if(fd < 0){
-		perror("open");
+	FILE* fp = fopen(ACCOUNT_LIST, "r+");
+
+	if(fp == NULL){
+		perror("fopen");
 		exit(-1);
 	}
 
+	size_t max_size = HASH_LEN;
+	char* tmp_hash = malloc(HASH_LEN);
+	char* tmp_salt = malloc(SALT_LEN);
 	char* string = malloc(WIDTH_ID); 
 	char* balance_string = malloc(WIDTH_BALANCE);
 	bank_account_t tmp_account;
 
-	while(read(fd, string, WIDTH_ID) > 0){
+	while(getline(&string, &max_size, fp) > 0){
 		tmp_account.account_id = atoi(string);
-		read(fd, tmp_account.hash, HASH_LEN+1);
-		read(fd, tmp_account.salt, HASH_LEN+1);
 		memset(string, '\0', WIDTH_ID);
-		read(fd, balance_string, WIDTH_BALANCE+1);
+
+		getline(&tmp_hash, &max_size, fp);
+		tmp_hash[HASH_LEN] = '\0';
+		strcpy(tmp_account.hash, tmp_hash);
+		memset(tmp_hash, '\0', HASH_LEN);
+
+		getline(&tmp_salt, &max_size, fp);
+		tmp_salt[HASH_LEN] = '\0';
+		strcpy(tmp_account.salt, tmp_salt);
+		memset(tmp_salt, '\0', SALT_LEN);
+
+		getline(&balance_string, &max_size, fp);
 		tmp_account.balance = atoi(balance_string);
-		memset(balance_string, '\0', WIDTH_BALANCE+1);
+		memset(balance_string, '\0', WIDTH_BALANCE);
 
 		if(tmp_account.account_id == account_id){
 			tmp_account.hash[HASH_LEN] = '\0';
@@ -298,11 +418,15 @@ uint32_t check_balance(uint32_t account_id, char* password){
 			char* hash = malloc(HASH_LEN+1);
 			get_hash(password, tmp_account.salt, hash);
 
-			if(hash == tmp_account.hash){
+			if(strcmp(hash, tmp_account.hash) == 0){
 				free(hash);
 				break;
 			}else{
 				free(hash);
+				if(fclose(fp)){
+					perror("close");
+					exit(-1);
+				}	
 				if(pthread_mutex_unlock(&save_account_mutex)){
 					perror("pthread_mutex_unlock");
 					exit(-1);
@@ -315,7 +439,7 @@ uint32_t check_balance(uint32_t account_id, char* password){
 	free(string);
 	free(balance_string);
 
-	if(close(fd)){
+	if(fclose(fp)){
 		perror("close");
 		exit(-1);
 	}	
@@ -354,9 +478,34 @@ void print_account_to_file(bank_account_t *account){
 		exit(-5);
 	}
 
+	char* id = malloc(WIDTH_ID);
+	char* tmp_id = malloc(WIDTH_ID);
+	sprintf(tmp_id, "%d", account->account_id);
+	char* balance = malloc(WIDTH_BALANCE);
+	char* tmp_balance = malloc(WIDTH_BALANCE);
+	sprintf(tmp_balance, "%d", account->balance);
+
+	memset(id, ' ', WIDTH_ID);
+	for(int i = 0; i < (int)strlen(tmp_id); i++){
+		id[i] = tmp_id[i];
+	}
+	id[WIDTH_ID-1] = '\0';
+
+	free(tmp_id);
+
+	memset(balance, ' ', WIDTH_BALANCE);
+	for(int i = 0; i < (int)strlen(tmp_balance); i++){
+		balance[i] = tmp_balance[i];
+	}
+	balance[WIDTH_BALANCE-1] = '\0';
+
+	free(tmp_balance);
 
 	char* account_info = malloc(WIDTH_ID+WIDTH_BALANCE+SALT_LEN+HASH_LEN);
-	sprintf(account_info, "%d\n%s\n%s\n%d\n", account->account_id, account->hash, account->salt, account->balance);
+	sprintf(account_info, "%s\n%s\n%s\n%s\n", id, account->hash, account->salt, balance);
+
+	free(id);
+	free(balance);
 
 	if(pthread_mutex_lock(&save_account_mutex)){
 		perror("pthread_mutex_lock");
