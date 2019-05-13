@@ -21,7 +21,7 @@ void salt_generator(char* salt);
 
 void delete_account_storage();*/
 
-void print_account_to_file(bank_account_t *account);
+//void print_account_to_file(bank_account_t *account);
 
 void get_hash(char* password, char* salt, char* hash);
 

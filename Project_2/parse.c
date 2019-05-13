@@ -27,10 +27,10 @@ void free_client_information(client_inf* client_information){
 	free(client_information);
 }
 
-int check_number(char* number_bank_offices){
+int check_number(char* number){
 
-	for(int i = 0; i < (int)strlen(number_bank_offices); i++){
-		if(!isdigit(number_bank_offices[i])){
+	for(int i = 0; i < (int)strlen(number); i++){
+		if(!isdigit(number[i])){
 			return 0;
 		}
 	}

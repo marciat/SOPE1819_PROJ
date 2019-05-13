@@ -77,7 +77,55 @@ int main(int argc, char* argv[]){
 			printf("Operations 0 and 2 require a non empty argument list.\n");
 			exit(-9);
 		}
-	}	
+	}
+
+	if(atoi(argv[4]) == 0){
+		char *tmpstr = malloc(strlen(argv[5]));
+		if(strstr(argv[5], " ") == NULL){
+			printf("Last argument of operation 3 must be \"new_account_id balance password\".\n");
+			free(tmpstr);
+			exit(-10);
+		}
+		tmpstr=strstr(argv[5], " ") + 1;
+		char *new_id = malloc(strlen(argv[5]));
+		strncpy(new_id, argv[5], strstr(argv[5], " ") - argv[5]);
+		if(!check_number(new_id)){
+			printf("New account ID must be a positive integer between 1 and %d.\n", MAX_BANK_ACCOUNTS);
+			free(tmpstr);
+			free(new_id);
+			exit(-10);
+		}
+		if(atoi(new_id)>MAX_BANK_ACCOUNTS || atoi(new_id)<1){
+			printf("New account ID must be a positive integer between 1 and %d.\n", MAX_BANK_ACCOUNTS);
+			free(tmpstr);
+			free(new_id);
+			exit(-10);
+		}
+		if(strstr(tmpstr, " ") == NULL){
+			printf("Last argument of operation 3 must be \"new_account_id balance password\".\n");
+			free(tmpstr);
+			free(new_id);
+			exit(-10);
+		}
+		char *balance = malloc(strlen(argv[5])-strlen(new_id));
+		strncpy(balance, tmpstr, strstr(tmpstr, " ") - tmpstr);
+		tmpstr = strstr(tmpstr, " ") + 1;
+		if(!check_number(balance) || strtoul(balance, NULL, 10) < MIN_BALANCE || strtoul(balance, NULL, 10)>MAX_BALANCE){
+			printf("New account balance must be a positive integer between 1 and %ld.\n", MAX_BALANCE);
+			free(tmpstr);
+			free(new_id);
+			free(balance);
+			exit(-10);
+		}		
+		char *password = malloc(strlen(argv[5]-strlen(new_id)-strlen(balance)));
+		strncpy(password, tmpstr, strlen(tmpstr));
+		free(tmpstr);
+		free(new_id);
+		free(balance);
+		free(password);
+
+	}
+
 
 	client_inf* client_information = malloc(sizeof(client_inf));
 
@@ -122,6 +170,8 @@ int main(int argc, char* argv[]){
 
 	free_client_information(client_information);
 
+	//printf(fifo_name);
+
 	if(unlink(fifo_name)){
 		perror("unlink");
 		exit(-1);
@@ -135,7 +185,7 @@ void user_help(){
 	printf("			requested_delay operation_code\n");
 	printf("			\"argument_1\"...\n");
 	printf("Creates a homebanking server in your pc\n");
-	printf("Example: user 1 \"my_pass\" 3000 0 \"\"\n\n");
+	printf("Example: user 1 \"my_pass\" 3000 1 \"\"\n\n");
 
 	printf("id_account:\n"); 
 	printf("	Id of the user account.\n\n");
