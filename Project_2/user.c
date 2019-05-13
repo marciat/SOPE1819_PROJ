@@ -82,7 +82,7 @@ int main(int argc, char* argv[]){
 	if(atoi(argv[4]) == 0){
 		char *tmpstr = malloc(strlen(argv[5]));
 		if(strstr(argv[5], " ") == NULL){
-			printf("Last argument of operation 3 must be \"new_account_id balance password\".\n");
+			printf("Last argument of operation 0 must be \"new_account_id balance password\".\n");
 			free(tmpstr);
 			exit(-10);
 		}
@@ -102,7 +102,7 @@ int main(int argc, char* argv[]){
 			exit(-10);
 		}
 		if(strstr(tmpstr, " ") == NULL){
-			printf("Last argument of operation 3 must be \"new_account_id balance password\".\n");
+			printf("Last argument of operation 0 must be \"new_account_id balance password\".\n");
 			free(tmpstr);
 			free(new_id);
 			exit(-10);
@@ -124,6 +124,36 @@ int main(int argc, char* argv[]){
 		free(balance);
 		free(password);
 
+	}
+
+	if(atoi(argv[4]) == 2){
+		char *tmpstr = malloc(strlen(argv[5]));
+		if(strstr(argv[5], " ") == NULL){
+			printf("Last argument of operation 2 must be \"destination_id amount\".\n");
+			free(tmpstr);
+			exit(-11);
+		}
+		tmpstr=strstr(argv[5], " ") + 1;
+		char *dest_id = malloc(strlen(argv[5]));
+		strncpy(dest_id, argv[5], strstr(argv[5], " ") - argv[5]);
+		if(!check_number(dest_id)){
+			printf("Destination account ID must be a positive integer between 1 and %d.\n", MAX_BANK_ACCOUNTS);
+			free(tmpstr);
+			free(dest_id);
+			exit(-10);
+		}
+		char *amount = malloc(strlen(argv[5]-strlen(dest_id)));
+		strncpy(amount, tmpstr, strlen(tmpstr));
+		if(!check_number(amount) || strtoul(amount, NULL, 10) < MIN_BALANCE || strtoul(amount, NULL, 10)>MAX_BALANCE){
+			printf("Amount must be a positive integer between 1 and %ld.\n", MAX_BALANCE);
+			free(tmpstr);
+			free(dest_id);
+			free(amount);
+			exit(-10);
+		}
+		free(tmpstr);
+		free(dest_id);
+		free(amount);
 	}
 
 
