@@ -89,6 +89,7 @@ bank_account_t* create_client_account(client_inf* client_information){
 		close(fd[READ]);
 	}
 
+	account->hash[HASH_LEN] = '\0';
 	account->balance = 0;
 
 	return account; //Probably this don't works
