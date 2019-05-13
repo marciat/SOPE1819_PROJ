@@ -19,6 +19,8 @@
 
 pthread_t* threads;
 
+bank_account_t accounts[MAX_BANK_ACCOUNTS];
+
 void* bank_office(void* attr){
 	int srv_fifo = *(int*)attr;
 
