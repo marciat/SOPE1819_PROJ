@@ -19,8 +19,6 @@
 
 pthread_t* threads;
 
-bank_account_t accounts[MAX_BANK_ACCOUNTS];
-
 void* bank_office(void* attr){
 	int srv_fifo = *(int*)attr;
 
@@ -73,9 +71,9 @@ int main(int argc, char* argv[]){
 
 	int num_bank_offices = atoi(argv[1]);
 
-	bank_account_t *admin_account = create_admin_account(argv[2]);
+	//bank_account_t *admin_account = create_admin_account(argv[2]);
 
-	create_account_storage();
+	//create_account_storage();
 
 	//print_account_to_file(admin_account);
 
