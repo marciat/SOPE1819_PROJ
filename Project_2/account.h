@@ -17,11 +17,11 @@ void money_transfer(uint32_t account_id, char* password, uint32_t new_account_id
 
 void salt_generator(char* salt);
 
-void create_account_storage();
+/*void create_account_storage();
 
-void delete_account_storage();
+void delete_account_storage();*/
 
-void print_account_to_file(bank_account_t *account);
+//void print_account_to_file(bank_account_t *account);
 
 void get_hash(char* password, char* salt, char* hash);
 

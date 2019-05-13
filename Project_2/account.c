@@ -23,7 +23,6 @@ void salt_generator(char* salt){
 }
 
 bank_account_t* create_client_account(client_inf* client_information){
-	usleep(client_information->operation_delay); //TODO Probably change this
 	bank_account_t* account = (bank_account_t*)malloc(sizeof(bank_account_t));
 
 	account->account_id = client_information->account_id;
@@ -172,7 +171,7 @@ void money_transfer(uint32_t account_id, char* password, uint32_t new_account_id
 		exit(-1);
 	}
 
-	FILE* fp = fopen(ACCOUNT_LIST, "r+");
+	/*FILE* fp = fopen(ACCOUNT_LIST, "r+");
 
 	if(fp == NULL){
 		perror("fopen");
@@ -283,8 +282,8 @@ void money_transfer(uint32_t account_id, char* password, uint32_t new_account_id
 	if(fclose(fp)){
 		perror("close");
 		exit(-1);
-	}	
-	
+	}*/
+	/*
 	fp = fopen(ACCOUNT_LIST, "r+");
 	char* balance = malloc(WIDTH_BALANCE);
 
@@ -356,7 +355,7 @@ void money_transfer(uint32_t account_id, char* password, uint32_t new_account_id
 	if(fclose(fp)){
 		perror("close");
 		exit(-1);
-	}	
+	}	*/
 
 	if(pthread_mutex_unlock(&save_account_mutex)){
 		perror("pthread_mutex_unlock");
@@ -379,6 +378,7 @@ uint32_t check_balance(uint32_t account_id, char* password){
 		return RC_OP_NALLOW;
 	}
 
+	/*
 	FILE* fp = fopen(ACCOUNT_LIST, "r+");
 
 	if(fp == NULL){
@@ -443,7 +443,7 @@ uint32_t check_balance(uint32_t account_id, char* password){
 	if(fclose(fp)){
 		perror("close");
 		exit(-1);
-	}	
+	}*/	
 
 	if(pthread_mutex_unlock(&save_account_mutex)){
 		perror("pthread_mutex_unlock");
@@ -453,7 +453,7 @@ uint32_t check_balance(uint32_t account_id, char* password){
 	return tmp_account.balance;
 }
 
-void create_account_storage(){
+/*void create_account_storage(){
 	int fd = open(ACCOUNT_LIST, O_CREAT, 0777);
 	if(fd < 0){
 		perror("open");
@@ -469,11 +469,11 @@ void delete_account_storage(){
 	if(unlink(ACCOUNT_LIST)){
 		perror("unlink");
 	}
-}
+}*/
 
-void print_account_to_file(bank_account_t *account){
+/*void print_account_to_file(bank_account_t *account){
 
-	int fd = open(ACCOUNT_LIST, O_WRONLY | O_APPEND, 0777);
+	/*int fd = open(ACCOUNT_LIST, O_WRONLY | O_APPEND, 0777);
 	if(fd < 0){
 		perror("open");
 		exit(-5);
@@ -526,7 +526,7 @@ void print_account_to_file(bank_account_t *account){
 	free(account_info);
 
 	close(fd);
-}
+}*/
 
 void get_hash(char* password, char* salt, char* hash){
 	int pipe_fd[2], fork_value;

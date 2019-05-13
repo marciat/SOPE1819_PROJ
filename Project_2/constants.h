@@ -33,4 +33,4 @@
 
 #define FIFO_TIMEOUT_SECS 30
 
-#define ACCOUNT_LIST "accounts.txt"
+//#define ACCOUNT_LIST "accounts.txt"

@@ -19,6 +19,8 @@
 
 pthread_t* threads;
 
+bank_account_t accounts[MAX_BANK_ACCOUNTS];
+
 void* bank_office(void* attr){
 	int srv_fifo = *(int*)attr;
 
@@ -75,18 +77,7 @@ int main(int argc, char* argv[]){
 
 	create_account_storage();
 
-	print_account_to_file(admin_account);
-	/*////////////////////////////////////////////////////////////////////////////////////////////777
-	client_inf *hello = malloc(sizeof(client_inf));
-	hello->account_id = 2;
-	hello->account_password = argv[2];
-
-	print_account_to_file(create_client_account(hello));
-	free(hello);
-	
-
-	//money_transfer(69, new_password, 43, 100);
-	printf("%d\n",check_balance(2, argv[2]));	*/
+	//print_account_to_file(admin_account);
 
 	if(pthread_mutex_init(&save_account_mutex, NULL)){
 		perror("pthread_mutex_init");
