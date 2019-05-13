@@ -25,8 +25,8 @@ void salt_generator(char* salt){
 }
 
 int create_client_account(client_inf* client_information){
-	if(accounts[client_information->account_id] == 0){
-		return -1;
+	if(client_information->account_id == 0 || accounts[client_information->account_id].account_id != 0){
+		return RC_ID_IN_USE;
 	}
 
 	bank_account_t account;
@@ -63,34 +63,58 @@ int money_transfer(uint32_t account_id, char* password, uint32_t new_account_id,
 		exit(-1);
 	}
 
-	if(accounts[account_id].account_id == 0 || accounts[new_account_id].account_id == 0){
-		write(STDOUT_FILENO, "OPERATION FAILED: Account Does Not Exist!!!\n", 44);
+	if(account_id == 0 || new_account_id == 0){
 		if(pthread_mutex_unlock(&save_account_mutex)){
 			perror("pthread_mutex_unlock");
 			exit(-1);
 		}
-		return -1;
+		return RC_OP_NALLOW;
+	}
+
+	if(accounts[account_id].account_id == 0 || accounts[new_account_id].account_id == 0){
+		//write(STDOUT_FILENO, "OPERATION FAILED: Account Does Not Exist!!!\n", 44);
+		if(pthread_mutex_unlock(&save_account_mutex)){
+			perror("pthread_mutex_unlock");
+			exit(-1);
+		}
+		return RC_ID_NOT_FOUND;
+	}
+
+	if(account_id == new_account_id){
+		if(pthread_mutex_unlock(&save_account_mutex)){
+			perror("pthread_mutex_unlock");
+			exit(-1);
+		}
+		return RC_SAME_ID;
 	}
 
 	char new_hash[HASH_LEN];
 	get_hash(password, accounts[account_id].hash, new_hash);
 
 	if(strcmp(new_hash, accounts[account_id].hash) != 0){
-		write(STDOUT_FILENO, "OPERATION FAILED: Invalid Password!!!\n", 38);
+		//write(STDOUT_FILENO, "OPERATION FAILED: Invalid Password!!!\n", 38);
 		if(pthread_mutex_unlock(&save_account_mutex)){
 			perror("pthread_mutex_unlock");
 			exit(-1);
 		}
-		return -1;
+		return RC_LOGIN_FAIL;
 	}
 
-	if(accounts[account_id].balance < amount){
-		write(STDOUT_FILENO, "OPERATION FAILED: Insufficient Money!!!\n", 40);
+	if(accounts[account_id].balance - amount < MIN_BALANCE){
+		//write(STDOUT_FILENO, "OPERATION FAILED: Insufficient Money!!!\n", 40);
 		if(pthread_mutex_unlock(&save_account_mutex)){
 			perror("pthread_mutex_unlock");
 			exit(-1);
 		}
-		return -1;
+		return RC_NO_FUNDS;
+	}
+
+	if(accounts[new_account_id].balance + amount > MAX_BALANCE){
+		if(pthread_mutex_unlock(&save_account_mutex)){
+			perror("pthread_mutex_unlock");
+			exit(-1);
+		}
+		return RC_TOO_HIGH;	
 	}
 
 	accounts[account_id].balance -= amount;
@@ -101,7 +125,7 @@ int money_transfer(uint32_t account_id, char* password, uint32_t new_account_id,
 		exit(-1);
 	}
 
-	return 0;
+	return RC_OK;
 }
 
 int check_balance(uint32_t account_id, char* password){
@@ -111,7 +135,7 @@ int check_balance(uint32_t account_id, char* password){
 		exit(-1);
 	}
 
-	if(account_id == 0 || accounts[account_id].account_id == 0){
+	if(account_id == 0){
 		if(pthread_mutex_unlock(&save_account_mutex)){
 			perror("pthread_mutex_unlock");
 			exit(-1);
@@ -119,16 +143,24 @@ int check_balance(uint32_t account_id, char* password){
 		return RC_OP_NALLOW;
 	}
 
-	char new_hash[HASH_LEN];
-	get_hash(password, accounts[account_id].hash, new_hash);
-
-	if(strcmp(new_hash, accounts[account_id].hash) != 0){
-		write(STDOUT_FILENO, "OPERATION FAILED: Invalid Password!!!\n", 38);
+	if(accounts[account_id].account_id == 0){
 		if(pthread_mutex_unlock(&save_account_mutex)){
 			perror("pthread_mutex_unlock");
 			exit(-1);
 		}
-		return -1;
+		return RC_ID_NOT_FOUND;	
+	}
+
+	char new_hash[HASH_LEN];
+	get_hash(password, accounts[account_id].hash, new_hash);
+
+	if(strcmp(new_hash, accounts[account_id].hash) != 0){
+		//write(STDOUT_FILENO, "OPERATION FAILED: Invalid Password!!!\n", 38);
+		if(pthread_mutex_unlock(&save_account_mutex)){
+			perror("pthread_mutex_unlock");
+			exit(-1);
+		}
+		return RC_LOGIN_FAIL;
 	}
 
 	printf("%d\n", accounts[account_id].balance);
@@ -139,7 +171,7 @@ int check_balance(uint32_t account_id, char* password){
 	}
 
 	//return tmp_account.balance;
-	return 0;
+	return RC_OK;
 }
 
 void get_hash(char* password, char* salt, char* hash){
