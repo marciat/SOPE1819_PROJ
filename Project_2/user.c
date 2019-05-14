@@ -40,11 +40,6 @@ int main(int argc, char* argv[]){
 		exit(-3);
 	}
 
-	if(strlen(argv[1]) > 9){
-		printf("Account ID cannot have more than 9 digits.\n");
-		exit(-3);
-	}
-
 	if(strlen(argv[2]) > MAX_PASSWORD_LEN || strlen(argv[2]) < MIN_PASSWORD_LEN){
 		printf("Password length must be between 8 to 20 characters.\n");
 		exit(-4);
@@ -80,86 +75,161 @@ int main(int argc, char* argv[]){
 	}
 
 	if(atoi(argv[4]) == 0){
-		char *tmpstr = malloc(strlen(argv[5]));
-		if(strstr(argv[5], " ") == NULL){
+		char *token;
+		const char s[2] = " ";
+		char *new_id = malloc(50);
+		char *balance = malloc(50);
+		char *password = malloc(50);
+		char* arg = malloc(strlen(argv[5]));
+		
+		strcpy(arg,argv[5]);
+
+		token = strtok(arg, s);
+		if(token == NULL){
 			printf("Last argument of operation 0 must be \"new_account_id balance password\".\n");
-			free(tmpstr);
+			free(new_id);
+			free(balance);
+			free(password);
 			exit(-10);
 		}
-		tmpstr=strstr(argv[5], " ") + 1;
-		char *new_id = malloc(strlen(argv[5]));
-		strncpy(new_id, argv[5], strstr(argv[5], " ") - argv[5]);
+		strcpy(new_id, token);
+
+		token = strtok(NULL, s);
+		if(token == NULL){
+			printf("Last argument of operation 0 must be \"new_account_id balance password\".\n");
+			free(new_id);
+			free(balance);
+			free(password);
+			exit(-10);
+		}
+		strcpy(balance, token);
+
+		token = strtok(NULL, s);
+		if(token == NULL){
+			printf("Last argument of operation 0 must be \"new_account_id balance password\".\n");
+			free(new_id);
+			free(balance);
+			free(password);
+			exit(-10);
+		}
+		strcpy(password, token);
+
+		token = strtok(NULL, s);
+		if(token != NULL){
+			printf("Last argument of operation 0 must be \"new_account_id balance password\".\n");
+			free(new_id);
+			free(balance);
+			free(password);
+			exit(-10);
+		}
+
 		if(!check_number(new_id)){
 			printf("New account ID must be a positive integer between 1 and %d.\n", MAX_BANK_ACCOUNTS);
-			free(tmpstr);
 			free(new_id);
+			free(balance);
+			free(password);
 			exit(-10);
 		}
 		if(atoi(new_id)>MAX_BANK_ACCOUNTS || atoi(new_id)<1){
 			printf("New account ID must be a positive integer between 1 and %d.\n", MAX_BANK_ACCOUNTS);
-			free(tmpstr);
-			free(new_id);
-			exit(-10);
-		}
-		if(strstr(tmpstr, " ") == NULL){
-			printf("Last argument of operation 0 must be \"new_account_id balance password\".\n");
-			free(tmpstr);
-			free(new_id);
-			exit(-10);
-		}
-		char *balance = malloc(strlen(argv[5])-strlen(new_id));
-		strncpy(balance, tmpstr, strstr(tmpstr, " ") - tmpstr);
-		tmpstr = strstr(tmpstr, " ") + 1;
-		if(!check_number(balance) || strtoul(balance, NULL, 10) < MIN_BALANCE || strtoul(balance, NULL, 10)>MAX_BALANCE){
-			printf("New account balance must be a positive integer between 1 and %ld.\n", MAX_BALANCE);
-			free(tmpstr);
 			free(new_id);
 			free(balance);
+			free(password);
+			exit(-10);
+		}
+		
+		if(!check_number(balance) || strtoul(balance, NULL, 10) < MIN_BALANCE || strtoul(balance, NULL, 10)>MAX_BALANCE){
+			printf("New account balance must be a positive integer between 1 and %ld.\n", MAX_BALANCE);
+			free(new_id);
+			free(balance);
+			free(password);
+			exit(-10);
+		}
+
+		if(strlen(password) < MIN_PASSWORD_LEN || strlen(password) > MAX_PASSWORD_LEN){
+			printf("New account password length must be between 8 to 20 characters.\n");
+			free(new_id);
+			free(balance);
+			free(password);
 			exit(-10);
 		}		
-		char *password = malloc(strlen(argv[5]-strlen(new_id)-strlen(balance)));
-		strncpy(password, tmpstr, strlen(tmpstr));
-		free(tmpstr);
+		
 		free(new_id);
 		free(balance);
 		free(password);
-
 	}
 
 	if(atoi(argv[4]) == 2){
-		char *tmpstr = malloc(strlen(argv[5]));
-		if(strstr(argv[5], " ") == NULL){
+		char *token;
+		const char s[2] = " ";
+		char *dest_id = malloc(50);
+		char *amount = malloc(50);
+		char* arg = malloc(strlen(argv[5]));
+		
+		strcpy(arg,argv[5]);
+
+		token = strtok(arg, s);
+		if(token == NULL){
 			printf("Last argument of operation 2 must be \"destination_id amount\".\n");
-			free(tmpstr);
-			exit(-11);
-		}
-		tmpstr=strstr(argv[5], " ") + 1;
-		char *dest_id = malloc(strlen(argv[5]));
-		strncpy(dest_id, argv[5], strstr(argv[5], " ") - argv[5]);
-		if(!check_number(dest_id)){
-			printf("Destination account ID must be a positive integer between 1 and %d.\n", MAX_BANK_ACCOUNTS);
-			free(tmpstr);
-			free(dest_id);
-			exit(-10);
-		}
-		char *amount = malloc(strlen(argv[5]-strlen(dest_id)));
-		strncpy(amount, tmpstr, strlen(tmpstr));
-		if(!check_number(amount) || strtoul(amount, NULL, 10) < MIN_BALANCE || strtoul(amount, NULL, 10)>MAX_BALANCE){
-			printf("Amount must be a positive integer between 1 and %ld.\n", MAX_BALANCE);
-			free(tmpstr);
 			free(dest_id);
 			free(amount);
 			exit(-10);
 		}
-		free(tmpstr);
+		strcpy(dest_id, token);
+
+		token = strtok(NULL, s);
+		if(token == NULL){
+			printf("Last argument of operation 2 must be \"destination_id amount\".\n");
+			free(dest_id);
+			free(amount);
+			exit(-10);
+		}
+		strcpy(amount, token);
+
+		token = strtok(NULL, s);
+		if(token != NULL){
+			printf("Last argument of operation 2 must be \"destination_id amount\".\n");
+			free(dest_id);
+			free(amount);
+			exit(-10);
+		}
+		
+		if(!check_number(dest_id)){
+			printf("Destination account ID must be a positive integer between 1 and %d.\n", MAX_BANK_ACCOUNTS);
+			free(dest_id);
+			free(amount);
+			exit(-10);
+		}
+		if(!check_number(amount) || strtoul(amount, NULL, 10) < MIN_BALANCE || strtoul(amount, NULL, 10)>MAX_BALANCE){
+			printf("Amount must be a positive integer between 1 and %ld.\n", MAX_BALANCE);
+			free(dest_id);
+			free(amount);
+			exit(-10);
+		}
+
 		free(dest_id);
 		free(amount);
 	}
 
+	tlv_request_t* request = malloc(sizeof(tlv_request_t)); 
 
-	client_inf* client_information = malloc(sizeof(client_inf));
+	parse_client_inf(argv, request);
+/*
+	printf("Type: %d\n", request->type);
 
-	parse_client_inf(argv, client_information);
+	printf("Length: %d\n", request->length);
+
+	printf("Pid: %d\n", request->value.header.pid);
+	printf("Account_ID: %d\n", request->value.header.account_id);
+	printf("Password: %s\n", request->value.header.password);
+	printf("Delay: %d\n", request->value.header.op_delay_ms);
+
+	printf("New Account_ID: %d\n", request->value.create.account_id);
+	printf("Balance: %d\n", request->value.create.balance);
+	printf("New Password: %s\n", request->value.create.password);
+
+	printf("Dest Account_ID: %d\n", request->value.transfer.account_id);
+	printf("Amount: %d\n", request->value.transfer.amount);*/
 
 	char pid[6];
 	sprintf(pid, "%d", getpid());
@@ -178,7 +248,7 @@ int main(int argc, char* argv[]){
 		exit(-1);
 	}
 
-	write_srv_fifo(srv_fifo, client_information);
+	write_srv_fifo(srv_fifo, request);
 
 	if(close(srv_fifo)){
 		perror("close server fifo");
@@ -197,8 +267,6 @@ int main(int argc, char* argv[]){
 		perror("close user fifo");
 		exit(-1);
 	}
-
-	free_client_information(client_information);
 
 	//printf(fifo_name);
 
@@ -239,14 +307,9 @@ void user_help(){
 	printf("	Arguments requested by the operation.\n");
 }
 
-void write_srv_fifo(int srv_fifo, client_inf* inf){
-	char* client_string = malloc(sizeof(char)+3*sizeof(int)+strlen(inf->account_password)+strlen(inf->operation_arguments));	 
-	sprintf(client_string, "%d %s %d %d %s\n", inf->account_id, inf->account_password, inf->operation_delay, inf->operation, inf->operation_arguments);
-	
-	if(write(srv_fifo, client_string, strlen(client_string)) < 0){
+void write_srv_fifo(int srv_fifo, tlv_request_t* request){
+	if(write(srv_fifo, request, request->length+sizeof(request->type)+sizeof(request->length)) < 0){
 		perror("write");
 		exit(-1);
 	}
-
-	free(client_string);	
 }

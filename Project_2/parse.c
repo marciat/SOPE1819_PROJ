@@ -9,22 +9,69 @@
 
 #include "parse.h"
 #include "constants.h"
+#include "types.h"
 
-void parse_client_inf(char* argv[], client_inf* inf){
-	inf->account_password = malloc(MAX_PASSWORD_LEN+1);
-	inf->operation_arguments = malloc(100);
+void parse_client_inf(char* argv[],	tlv_request_t* request){
+	req_header_t header;
+	req_value_t value;
 
-	inf->account_id = atoi(argv[1]);
-	strcpy(inf->account_password, argv[2]);
-	inf->operation_delay = atoi(argv[3]);
-	inf->operation = atoi(argv[4]);
-	strcpy(inf->operation_arguments, argv[5]);
-}
+	request->type = atoi(argv[4]);
+	
+	header.pid = getpid();
+	header.account_id = atoi(argv[1]);
+	strcpy(header.password, argv[2]);
+	header.op_delay_ms = strtoul(argv[3], NULL, 10);
 
-void free_client_information(client_inf* client_information){
-	free(client_information->account_password);
-	free(client_information->operation_arguments);
-	free(client_information);
+	if(atoi(argv[4]) == 0){
+    	req_create_account_t create;
+		char *token;
+		const char s[2] = " ";
+		char *new_id = malloc(50);
+		char *balance = malloc(50);
+		char *password = malloc(50);
+
+		token = strtok(argv[5], s);
+		strcpy(new_id, token);
+
+		token = strtok(NULL, s);
+		strcpy(balance, token);
+
+		token = strtok(NULL, s);
+		strcpy(password, token);
+
+		create.account_id = atoi(new_id);
+		create.balance = strtoul(balance, NULL, 10);
+		strcpy(create.password, password);
+		value.create = create;
+		free(new_id);
+		free(balance);
+		free(password);
+	}
+
+	if(atoi(argv[4]) == 2){	
+    	req_transfer_t transfer;
+		char *token;
+		const char s[2] = " ";
+		char *dest_id = malloc(50);
+		char *amount = malloc(50);
+
+		token = strtok(argv[5], s);
+		strcpy(dest_id, token);
+		token = strtok(NULL, s);
+		strcpy(amount, token);
+
+		transfer.account_id = atoi(dest_id);
+		transfer.amount = strtoul(amount,NULL,10);
+		value.transfer = transfer;
+
+		free(dest_id);
+		free(amount);
+
+	}
+
+	value.header = header;
+	request->value = value;
+	request->length = sizeof(request->value);
 }
 
 int check_number(char* number){

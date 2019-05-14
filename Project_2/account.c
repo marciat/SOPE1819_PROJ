@@ -15,7 +15,7 @@
 bank_account_t accounts[MAX_BANK_ACCOUNTS] = { {.account_id = 0} };
 
 void salt_generator(char* salt){
-	char string[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+	char string[] = "abcdef0123456789";
 
 	for(int i = 0; i < SALT_LEN; i++){
 		salt[i] = string[rand() % (strlen(string))];
@@ -24,16 +24,16 @@ void salt_generator(char* salt){
 	salt[SALT_LEN] = '\0';
 }
 
-int create_client_account(client_inf* client_information){
-	if(client_information->account_id == 0 || accounts[client_information->account_id].account_id != 0){
+int create_client_account(req_value_t* client_information){
+	if(client_information->header.account_id == 0 || accounts[client_information->header.account_id].account_id != 0){
 		return RC_ID_IN_USE;
 	}
 
 	bank_account_t account;
 
-	account.account_id = client_information->account_id;
+	account.account_id = client_information->header.account_id;
 	salt_generator(account.salt);
-	get_hash(client_information->account_password, account.salt, account.hash);
+	get_hash(client_information->header.password, account.salt, account.hash);
 
 	account.balance = 0;
 

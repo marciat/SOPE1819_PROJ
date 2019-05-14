@@ -123,7 +123,7 @@ typedef struct tlv_request {
 
 /**
  * @brief Reply header fields (always present).
- */
+ */ 
 typedef struct rep_header {
   uint32_t account_id;
   int ret_code;

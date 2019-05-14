@@ -6,6 +6,6 @@
 
 void user_help();
 
-void write_srv_fifo(int srv_fifo, client_inf* inf);
+void write_srv_fifo(int srv_fifo, tlv_request_t* request);
 
 #endif

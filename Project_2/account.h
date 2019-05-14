@@ -7,7 +7,7 @@
 #include "parse.h"
 #include "types.h"
 
-int create_client_account(client_inf* client_information);
+int create_client_account(req_value_t* client_information);
 
 int create_admin_account(char* admin_password);
 
