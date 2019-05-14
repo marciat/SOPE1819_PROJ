@@ -214,22 +214,6 @@ int main(int argc, char* argv[]){
 	tlv_request_t* request = malloc(sizeof(tlv_request_t)); 
 
 	parse_client_inf(argv, request);
-/*
-	printf("Type: %d\n", request->type);
-
-	printf("Length: %d\n", request->length);
-
-	printf("Pid: %d\n", request->value.header.pid);
-	printf("Account_ID: %d\n", request->value.header.account_id);
-	printf("Password: %s\n", request->value.header.password);
-	printf("Delay: %d\n", request->value.header.op_delay_ms);
-
-	printf("New Account_ID: %d\n", request->value.create.account_id);
-	printf("Balance: %d\n", request->value.create.balance);
-	printf("New Password: %s\n", request->value.create.password);
-
-	printf("Dest Account_ID: %d\n", request->value.transfer.account_id);
-	printf("Amount: %d\n", request->value.transfer.amount);*/
 
 	char pid[6];
 	sprintf(pid, "%d", getpid());
@@ -249,6 +233,8 @@ int main(int argc, char* argv[]){
 	}
 
 	write_srv_fifo(srv_fifo, request);
+
+	free(request);
 
 	if(close(srv_fifo)){
 		perror("close server fifo");

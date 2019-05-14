@@ -4,7 +4,7 @@
 
 #include <pthread.h>
 
-pthread_cond_t srv_cond = PTHREAD_COND_INITIALIZER;
-pthread_mutex_t srv_mutex = PTHREAD_MUTEX_INITIALIZER;
+//pthread_cond_t srv_cond;// = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t srv_mutex;// = PTHREAD_MUTEX_INITIALIZER;
 
 #endif

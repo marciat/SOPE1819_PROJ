@@ -7,11 +7,12 @@
 #include <fcntl.h>
 #include <stdbool.h>
 #include <semaphore.h>
-
-//#include <pthread.h>
+#include <pthread.h>
+//#include <mqueue.h>
 
 //Given header files
 #include "constants.h"
+#include "types.h"
 
 //Header files created by us
 #include "server.h"
@@ -19,22 +20,38 @@
 #include "fifo.h"
 
 pthread_t* threads;
+//mqd_t order_queue;
+//char order_queue_name[] = "order_queue";
+sem_t empty, full;
 
 void* bank_office(void* attr){
 	int srv_fifo = *(int*)attr;
 
 	while(true){
-		char* user_inf = malloc(sizeof(char)+3*sizeof(int)+MAX_PASSWORD_LEN+255);
-		read_srv_fifo(srv_fifo, user_inf);
-
-		uint32_t account_id, operation_delay, operation;
-		char* password = malloc(MAX_PASSWORD_LEN);
-		char* operation_arguments = malloc(255);
-		sscanf(user_inf, "%u %s %u %u %s\n", &account_id, password, &operation_delay, &operation, operation_arguments);
-		
-		free(password);
-		free(operation_arguments);
-		free(user_inf);
+		tlv_request_t* request = malloc(MAX_PASSWORD_LEN*2 + 30);
+		sem_wait(&full);
+		//READ FROM FIFO
+		sem_post(&empty);
+		ret_code_t ret_value;
+		switch(request->type){
+			case OP_CREATE_ACCOUNT:
+				ret_value = create_client_account(request->value);
+				break;
+			case OP_BALANCE:
+				ret_value = check_balance(request->value.header.account_id, request->value.header.password);
+				break;
+			case OP_TRANSFER:
+				ret_value = money_transfer(request->value.header.account_id, request->value.header.password, request->value.transfer.account_id, request->value.transfer.amount);
+				break;
+			case OP_SHUTDOWN:
+				//SHUTDOWN SERVER - Terminar ciclo dos balcões
+				//Verificar no server se foi recebida a operação (variável global que indica se pode encerrar) 
+				//Recolha de todas as threads
+				break;
+			default:
+				//error
+		}
+		free(request);
 	}
 
 	return NULL;
@@ -80,6 +97,10 @@ int main(int argc, char* argv[]){
 		perror("pthread_mutex_init");
 		exit(-1);
 	}
+	if(pthread_mutex_init(&srv_mutex, NULL)){
+		perror("pthread_mutex_init");
+		exit(-1);
+	}
 
 	threads = malloc(sizeof(pthread_t)*num_bank_offices); 
 
@@ -87,7 +108,7 @@ int main(int argc, char* argv[]){
 		perror("mkfifo");
 		exit(-1);
 	}
-/*
+
 	int srv_fifo = open(SERVER_FIFO_PATH, O_RDONLY);
 	if(srv_fifo < 0){
 		perror("open server fifo");
@@ -102,6 +123,19 @@ int main(int argc, char* argv[]){
 		threads[i-1] = tid;
 	}
 
+	sem_init(&empty, SHARED, num_bank_offices);
+	//WRITE IN FIFO
+	sem_init(&full, SHARED, 0);
+
+	while(true){
+		tlv_request_t* request = malloc(MAX_PASSWORD_LEN*2 + 30);
+		read_srv_fifo(srv_fifo, request);
+		sem_wait(&empty);
+
+		sem_post(&full);
+		free(request);
+	}
+/*
 	for(int i = 0; i < num_bank_offices; i++){ //Joining all threads before exiting
 		if(pthread_join(threads[i], NULL)){
 			perror("pthread_join");
@@ -136,20 +170,20 @@ void server_help(){
 	printf("	This argument represents the administrator password. This have to be between quotation marks.\n");
 }
 
-void read_srv_fifo(int srv_fifo, char* inf){
+void read_srv_fifo(int srv_fifo, tlv_request_t* request){
 	if(pthread_mutex_lock(&srv_mutex)){
 		perror("pthread_mutex_lock");
 	}
 
 	int read_value;
 
-	while((read_value = read(srv_fifo, inf, sizeof(char)+3*sizeof(int)+MAX_PASSWORD_LEN+255)) == 0){
+	while((read_value = read(srv_fifo, request, MAX_PASSWORD_LEN*2 + 30)) == 0){
 		if(read_value < 0){
 			perror("read server fifo");
 		}
-		if(pthread_cond_wait(&srv_cond, &srv_mutex)){
+		/*if(pthread_cond_wait(&srv_cond, &srv_mutex)){
 			perror("pthread_cond_wait");
-		}
+		}*/
 	}
 
 	if(pthread_mutex_unlock(&srv_mutex)){
