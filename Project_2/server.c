@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdbool.h>
+#include <semaphore.h>
 
 //#include <pthread.h>
 
@@ -72,12 +73,10 @@ int main(int argc, char* argv[]){
 	int num_bank_offices = atoi(argv[1]);
 
 	//bank_account_t *admin_account = create_admin_account(argv[2]);
+	int admin_return = create_admin_account(argv[2]); //TODO Change return value handler
+	printf("%d\n", admin_return); //Delete this
 
-	//create_account_storage();
-
-	//print_account_to_file(admin_account);
-
-	if(pthread_mutex_init(&save_account_mutex, NULL)){
+	if(pthread_mutex_init(&account_mutex, NULL)){
 		perror("pthread_mutex_init");
 		exit(-1);
 	}
@@ -120,8 +119,6 @@ int main(int argc, char* argv[]){
 		perror("unlink");
 		exit(-1);
 	}
-
-	//delete_account_storage();
 
 	return 0;
 }
