@@ -7,9 +7,9 @@
 #include "parse.h"
 #include "types.h"
 
-int create_client_account(req_value_t* client_information);
+int create_client_account(req_value_t* client_information, int thread_id);
 
-int create_admin_account(char* admin_password);
+int create_admin_account(char* admin_password, int thread_id);
 
 int check_balance(uint32_t account_id, char* password);
 
@@ -20,5 +20,7 @@ void salt_generator(char* salt);
 void get_hash(char* password, char* salt, char* hash);
 
 pthread_mutex_t account_mutex;// = PTHREAD_MUTEX_INITIALIZER;
+
+int server_logfile;
 
 #endif

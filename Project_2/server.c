@@ -12,6 +12,7 @@
 //Given header files
 #include "constants.h"
 #include "types.h"
+#include "sope.h"
 
 //Header files created by us
 #include "server.h"
@@ -20,10 +21,9 @@
 #include "reqqueue.h"
 
 pthread_t* threads;
-//mqd_t order_queue;
-//char order_queue_name[] = "order_queue";
 sem_t empty, full;
 bool server_run;
+pthread_mutex_t server_run_mutex;
 
 Queue* request_queue;
 
@@ -31,6 +31,12 @@ void* bank_office(){
 
 	while(server_run){
 		tlv_request_t* request = malloc(MAX_PASSWORD_LEN*2 + 30);
+		pthread_mutex_lock(&server_run_mutex);
+		if(!server_run){
+			pthread_mutex_unlock(&server_run_mutex);
+			return NULL;
+		}
+		pthread_mutex_unlock(&server_run_mutex);
 		sem_wait(&full);
 		*request = Dequeue(request_queue)->info;
 		sem_post(&empty);
@@ -38,7 +44,7 @@ void* bank_office(){
 		switch(request->type){
 			case OP_CREATE_ACCOUNT:
 				printf("create\n");
-				ret_value = create_client_account(&request->value);
+				ret_value = create_client_account(&request->value, pthread_self());
 				break;
 			case OP_BALANCE:
 				printf("balance\n");
@@ -74,11 +80,13 @@ int main(int argc, char* argv[]){
 	setbuf(stdout, NULL);
 	srand(time(NULL));
 
-	server_run = true;
-
-	if(server_run){
-		printf("ola\n");
+	server_logfile = open(SERVER_LOGFILE, O_WRONLY | O_CREAT, 0777); //OPENING SERVER LOGFILE
+	if(server_logfile < 0){
+		perror("open server logfile");
+		exit(-1);
 	}
+
+	server_run = true;
 
 	if(argc == 2 && strcmp(argv[1], "--help") == 0){
 		server_help();
@@ -109,7 +117,7 @@ int main(int argc, char* argv[]){
 	int num_bank_offices = atoi(argv[1]);
 
 	//bank_account_t *admin_account = create_admin_account(argv[2]);
-	int admin_return = create_admin_account(argv[2]); //TODO Change return value handler
+	int admin_return = create_admin_account(argv[2], 0); //TODO Change return value handler
 	printf("%d\n", admin_return); //Delete this
 
 	if(pthread_mutex_init(&account_mutex, NULL)){
@@ -117,6 +125,11 @@ int main(int argc, char* argv[]){
 		exit(-1);
 	}
 	if(pthread_mutex_init(&srv_mutex, NULL)){
+		perror("pthread_mutex_init");
+		exit(-1);
+	}
+
+	if(pthread_mutex_init(&server_run_mutex, NULL)){
 		perror("pthread_mutex_init");
 		exit(-1);
 	}
@@ -142,6 +155,9 @@ int main(int argc, char* argv[]){
 			perror("pthread_create");
 			exit(-1);
 		}
+		if(logBankOfficeOpen(server_logfile, 0, tid) < 0){
+			printf("Log bank office open error!\n");
+		}
 		threads[i-1] = tid;
 	}
 
@@ -150,10 +166,16 @@ int main(int argc, char* argv[]){
 
 	while(server_run){
 		sem_wait(&empty);
+		if(!server_run){
+			break;
+		}
 		printf("main:%d\n", server_run);
 		tlv_request_t* request = malloc(MAX_PASSWORD_LEN*2 + 30);
 		printf("main:%d\n", server_run);
 		read_srv_fifo(srv_fifo, request);
+		if(logRequest(server_logfile, 0, request) < 0){
+			printf("Log request error!\n");
+		}
 		printf("main:%d\n", server_run);
 		Enqueue(request_queue, request);
 		printf("main:%d\n", server_run);
@@ -171,6 +193,9 @@ int main(int argc, char* argv[]){
 			perror("pthread_join");
 			exit(-1);
 		}
+		if(logBankOfficeClose(server_logfile, 0, i+1) < 0){
+			printf("Log bank office close error!\n");
+		}
 	}
 	if(close(srv_fifo)){
 		perror("close server fifo");
@@ -182,6 +207,11 @@ int main(int argc, char* argv[]){
 
 	if(unlink(SERVER_FIFO_PATH)){
 		perror("unlink");
+		exit(-1);
+	}
+
+	if(close(server_logfile) < 0){
+		perror("close server logfile");
 		exit(-1);
 	}
 

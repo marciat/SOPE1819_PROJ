@@ -8,6 +8,8 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 
+#include "sope.h"
+
 #include "account.h"
 #include "constants.h"
 #include "types.h"
@@ -24,7 +26,7 @@ void salt_generator(char* salt){
 	salt[SALT_LEN] = '\0';
 }
 
-int create_client_account(req_value_t* client_information){
+int create_client_account(req_value_t* client_information, int thread_id){
 	if(client_information->header.account_id == 0 || accounts[client_information->header.account_id].account_id != 0){
 		return RC_ID_IN_USE;
 	}
@@ -39,10 +41,14 @@ int create_client_account(req_value_t* client_information){
 
 	accounts[account.account_id] = account;
 
+	if(logAccountCreation(server_logfile, thread_id, &account) < 0){
+		printf("Log account creation error!\n");
+	}
+
 	return 0;
 }
 
-int create_admin_account(char* admin_password){
+int create_admin_account(char* admin_password, int thread_id){
 	bank_account_t account;
 
 	account.account_id = ADMIN_ACCOUNT_ID;
@@ -53,6 +59,10 @@ int create_admin_account(char* admin_password){
 	account.balance = 0;
 
 	accounts[0] = account;
+
+	if(logAccountCreation(server_logfile, thread_id, &account) < 0){
+		printf("Log account creation error!\n");
+	}
 
 	return 0; 
 }

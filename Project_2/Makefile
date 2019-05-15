@@ -1,10 +1,10 @@
 all: user server
 
-user: user.o parse.o
-	gcc -o user user.o parse.o -Wall -Wextra -Werror
+user: user.o parse.o log.o
+	gcc -o user user.o parse.o log.o -Wall -Wextra -Werror
 
-server: server.o parse.o account.o reqqueue.o
-	gcc -o server server.o parse.o account.o reqqueue.o -D_REENTRANT -lpthread
+server: server.o parse.o account.o reqqueue.o log.o
+	gcc -o server server.o parse.o account.o reqqueue.o log.o -D_REENTRANT -lpthread
 
 user.o: user.c
 	gcc -o user.o user.c -c -Wall -Wextra -Werror
@@ -20,6 +20,9 @@ account.o: account.c
 
 reqqueue.o: reqqueue.c
 	gcc -o reqqueue.o reqqueue.c -c -Wall -Wextra -Werror
+
+log.o: log.c
+	gcc -o log.o log.c -c -Wall -Wextra -Werror
 
 clean:
 	rm -rf *.o *~ user server
