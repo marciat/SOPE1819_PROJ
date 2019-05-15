@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
 {
 	setbuf(stdout, NULL);
 
-	int user_logfile = open(USER_LOGFILE, O_WRONLY | O_CREAT, 0777); //OPENING USER LOGFILE
+	int user_logfile = open(USER_LOGFILE, O_WRONLY | O_APPEND | O_CREAT, 0777); //OPENING USER LOGFILE
 	if(user_logfile < 0){
 		perror("open user logfile");
 		exit(-1);

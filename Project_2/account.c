@@ -68,12 +68,18 @@ int create_admin_account(char* admin_password, int thread_id){
 }
 
 int money_transfer(uint32_t account_id, char* password, uint32_t new_account_id, uint32_t amount){
+	if(logSyncMechSem(server_logfile, pthread_self(), SYNC_OP_MUTEX_LOCK, SYNC_ROLE_CONSUMER, 0, 0) < 0){
+		printf("Log sync mech sum error!\n");
+	}
 	if(pthread_mutex_lock(&account_mutex)){
 		perror("pthread_mutex_lock");
 		exit(-1);
 	}
 
 	if(account_id == 0 || new_account_id == 0){
+		if(logSyncMechSem(server_logfile, pthread_self(), SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_CONSUMER, 0, 0) < 0){
+			printf("Log sync mech sum error!\n");
+		}
 		if(pthread_mutex_unlock(&account_mutex)){
 			perror("pthread_mutex_unlock");
 			exit(-1);
@@ -82,7 +88,9 @@ int money_transfer(uint32_t account_id, char* password, uint32_t new_account_id,
 	}
 
 	if(accounts[account_id].account_id == 0 || accounts[new_account_id].account_id == 0){
-		//write(STDOUT_FILENO, "OPERATION FAILED: Account Does Not Exist!!!\n", 44);
+		if(logSyncMechSem(server_logfile, pthread_self(), SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_CONSUMER, 0, 0) < 0){
+			printf("Log sync mech sum error!\n");
+		}
 		if(pthread_mutex_unlock(&account_mutex)){
 			perror("pthread_mutex_unlock");
 			exit(-1);
@@ -91,6 +99,9 @@ int money_transfer(uint32_t account_id, char* password, uint32_t new_account_id,
 	}
 
 	if(account_id == new_account_id){
+		if(logSyncMechSem(server_logfile, pthread_self(), SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_CONSUMER, 0, 0) < 0){
+			printf("Log sync mech sum error!\n");
+		}
 		if(pthread_mutex_unlock(&account_mutex)){
 			perror("pthread_mutex_unlock");
 			exit(-1);
@@ -102,7 +113,9 @@ int money_transfer(uint32_t account_id, char* password, uint32_t new_account_id,
 	get_hash(password, accounts[account_id].hash, new_hash);
 
 	if(strcmp(new_hash, accounts[account_id].hash) != 0){
-		//write(STDOUT_FILENO, "OPERATION FAILED: Invalid Password!!!\n", 38);
+		if(logSyncMechSem(server_logfile, pthread_self(), SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_CONSUMER, 0, 0) < 0){
+			printf("Log sync mech sum error!\n");
+		}
 		if(pthread_mutex_unlock(&account_mutex)){
 			perror("pthread_mutex_unlock");
 			exit(-1);
@@ -111,7 +124,9 @@ int money_transfer(uint32_t account_id, char* password, uint32_t new_account_id,
 	}
 
 	if(accounts[account_id].balance - amount < MIN_BALANCE){
-		//write(STDOUT_FILENO, "OPERATION FAILED: Insufficient Money!!!\n", 40);
+		if(logSyncMechSem(server_logfile, pthread_self(), SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_CONSUMER, 0, 0) < 0){
+			printf("Log sync mech sum error!\n");
+		}
 		if(pthread_mutex_unlock(&account_mutex)){
 			perror("pthread_mutex_unlock");
 			exit(-1);
@@ -120,6 +135,9 @@ int money_transfer(uint32_t account_id, char* password, uint32_t new_account_id,
 	}
 
 	if(accounts[new_account_id].balance + amount > MAX_BALANCE){
+		if(logSyncMechSem(server_logfile, pthread_self(), SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_CONSUMER, 0, 0) < 0){
+			printf("Log sync mech sum error!\n");
+		}
 		if(pthread_mutex_unlock(&account_mutex)){
 			perror("pthread_mutex_unlock");
 			exit(-1);
@@ -130,6 +148,9 @@ int money_transfer(uint32_t account_id, char* password, uint32_t new_account_id,
 	accounts[account_id].balance -= amount;
 	accounts[new_account_id].balance += amount;
 
+	if(logSyncMechSem(server_logfile, pthread_self(), SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_CONSUMER, 0, 0) < 0){
+		printf("Log sync mech sum error!\n");
+	}
 	if(pthread_mutex_unlock(&account_mutex)){
 		perror("pthread_mutex_unlock");
 		exit(-1);
@@ -139,13 +160,18 @@ int money_transfer(uint32_t account_id, char* password, uint32_t new_account_id,
 }
 
 int check_balance(uint32_t account_id, char* password){
-
+	if(logSyncMechSem(server_logfile, pthread_self(), SYNC_OP_MUTEX_LOCK, SYNC_ROLE_CONSUMER, 0, 0) < 0){
+		printf("Log sync mech sum error!\n");
+	}
 	if(pthread_mutex_lock(&account_mutex)){
 		perror("pthread_mutex_lock");
 		exit(-1);
 	}
 
 	if(account_id == 0){
+		if(logSyncMechSem(server_logfile, pthread_self(), SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_CONSUMER, 0, 0) < 0){
+			printf("Log sync mech sum error!\n");
+		}
 		if(pthread_mutex_unlock(&account_mutex)){
 			perror("pthread_mutex_unlock");
 			exit(-1);
@@ -154,6 +180,9 @@ int check_balance(uint32_t account_id, char* password){
 	}
 
 	if(accounts[account_id].account_id == 0){
+		if(logSyncMechSem(server_logfile, pthread_self(), SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_CONSUMER, 0, 0) < 0){
+			printf("Log sync mech sum error!\n");
+		}
 		if(pthread_mutex_unlock(&account_mutex)){
 			perror("pthread_mutex_unlock");
 			exit(-1);
@@ -165,7 +194,9 @@ int check_balance(uint32_t account_id, char* password){
 	get_hash(password, accounts[account_id].hash, new_hash);
 
 	if(strcmp(new_hash, accounts[account_id].hash) != 0){
-		//write(STDOUT_FILENO, "OPERATION FAILED: Invalid Password!!!\n", 38);
+		if(logSyncMechSem(server_logfile, pthread_self(), SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_CONSUMER, 0, 0) < 0){
+			printf("Log sync mech sum error!\n");
+		}
 		if(pthread_mutex_unlock(&account_mutex)){
 			perror("pthread_mutex_unlock");
 			exit(-1);
@@ -175,12 +206,14 @@ int check_balance(uint32_t account_id, char* password){
 
 	printf("%d\n", accounts[account_id].balance);
 
+	if(logSyncMechSem(server_logfile, pthread_self(), SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_CONSUMER, 0, 0) < 0){
+		printf("Log sync mech sum error!\n");
+	}
 	if(pthread_mutex_unlock(&account_mutex)){
 		perror("pthread_mutex_unlock");
 		exit(-1);
 	}
 
-	//return tmp_account.balance;
 	return RC_OK;
 }
 
