@@ -65,18 +65,27 @@ void* bank_office(){
 				ret_value = create_client_account(&request->value, pthread_self(), &reply);
 				reply.value.header.ret_code = ret_value;
 				send_reply(request, &reply);
+				if(logReply(server_logfile, pthread_self(), &reply) < 0){
+					printf("Log reply error!\n");
+				}
 				break;
 			case OP_BALANCE:
 				printf("balance\n");
 				ret_value = check_balance(request->value.header.account_id, request->value.header.password, &reply);
 				reply.value.header.ret_code = ret_value;
 				send_reply(request, &reply);
+				if(logReply(server_logfile, pthread_self(), &reply) < 0){
+					printf("Log reply error!\n");
+				}
 				break;
 			case OP_TRANSFER:
 				printf("transfer\n");
 				ret_value = money_transfer(request->value.header.account_id, request->value.header.password, request->value.transfer.account_id, request->value.transfer.amount, &reply);
 				reply.value.header.ret_code = ret_value;
 				send_reply(request, &reply);
+				if(logReply(server_logfile, pthread_self(), &reply) < 0){
+					printf("Log reply error!\n");
+				}
 				break;
 			case OP_SHUTDOWN:
 				printf("shutdown\n");
@@ -86,6 +95,9 @@ void* bank_office(){
 				reply.value.header.account_id = 0;
 				reply.value.header.ret_code = RC_OK;
 				send_reply(request, &reply);
+				if(logReply(server_logfile, pthread_self(), &reply) < 0){
+					printf("Log reply error!\n");
+				}
 				printf("thread:%d\n", server_run);
 				//SHUTDOWN SERVER - Terminar ciclo dos balcões
 				//Verificar no server se foi recebida a operação (variável global que indica se pode encerrar) 

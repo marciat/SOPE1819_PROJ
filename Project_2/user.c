@@ -302,6 +302,9 @@ int main(int argc, char *argv[])
 
 	read_user_fifo(user_fifo, &reply);
 
+	if(logReply(user_logfile, getpid(), &reply) < 0){
+		printf("Log reply error!\n");
+	}
 
 	if (close(user_fifo))
 	{
