@@ -184,10 +184,10 @@ void read_srv_fifo(int srv_fifo, tlv_request_t* request){
 
 	int read_value;
 	int read_size = 0;
-	char op_type[4];
-	char length[4];
+	uint32_t op_type;
+	uint32_t length;
 
-	while((read_value = read(srv_fifo, op_type, sizeof(int))) == 0){
+	while((read_value = read(srv_fifo, &op_type, sizeof(int))) == 0){
 		if(read_value < 0){
 			perror("read server fifo");
 		}
@@ -195,8 +195,8 @@ void read_srv_fifo(int srv_fifo, tlv_request_t* request){
 			perror("pthread_cond_wait");
 		}*/
 	}
-	printf("%s\n", op_type);
-	while((read_value = read(srv_fifo, length, sizeof(uint32_t))) == 0){
+	printf("%d\n", op_type);
+	while((read_value = read(srv_fifo, &length, sizeof(uint32_t))) == 0){
 		if(read_value < 0){
 			perror("read server fifo");
 		}
@@ -204,9 +204,9 @@ void read_srv_fifo(int srv_fifo, tlv_request_t* request){
 			perror("pthread_cond_wait");
 		}*/
 	}
-	printf("%d\n", atoi(length));
+	printf("%d\n", length);
 
-	read_size+= atoi(length);
+	read_size+= length;
 	req_value_t value;
 
 	while((read_value = read(srv_fifo, &value, read_size)) == 0){
@@ -218,8 +218,8 @@ void read_srv_fifo(int srv_fifo, tlv_request_t* request){
 		}*/
 	}
 
-	request->type = atoi(op_type);
-	request->length = atoi(length);
+	request->type = op_type;
+	request->length = length;
 	request->value = value;
 
 	if(pthread_mutex_unlock(&srv_mutex)){
