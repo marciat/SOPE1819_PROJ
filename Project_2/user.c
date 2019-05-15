@@ -18,6 +18,12 @@ int main(int argc, char *argv[])
 {
 	setbuf(stdout, NULL);
 
+	int user_logfile = open(USER_LOGFILE, O_WRONLY); //OPENING USER LOG FILE
+	if(user_logfile < 0){
+		perror("open user logfile");
+		exit(-1);
+	}
+
 	if (argc == 2 && strcmp(argv[1], "--help") == 0)
 	{
 		user_help();
@@ -271,6 +277,9 @@ int main(int argc, char *argv[])
 		exit(-1);
 	}
 
+	if(logRequest(user_logfile, getpid(), request) < 0){
+		printf("Log request error!\n");
+	}
 	write_srv_fifo(srv_fifo, request);
 
 	free(request);
@@ -296,11 +305,14 @@ int main(int argc, char *argv[])
 		exit(-1);
 	}
 
-	//printf(fifo_name);
-
 	if (unlink(fifo_name))
 	{
 		perror("unlink");
+		exit(-1);
+	}
+
+	if(close(user_logfile) < 0){
+		perror("close user logfile");
 		exit(-1);
 	}
 
