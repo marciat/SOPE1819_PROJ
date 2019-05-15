@@ -19,6 +19,7 @@ void parse_client_inf(char* argv[],	tlv_request_t* request){
 	strcpy(header.password, clear_password);
 
 	request->type = atoi(argv[4]);
+	request->length = 0;
 	
 	header.pid = getpid();
 	header.account_id = atoi(argv[1]);
@@ -50,6 +51,7 @@ void parse_client_inf(char* argv[],	tlv_request_t* request){
 		free(new_id);
 		free(balance);
 		free(password);
+		request->length+= sizeof(req_create_account_t);
 	}
 
 	if(atoi(argv[4]) == 2){	
@@ -71,11 +73,13 @@ void parse_client_inf(char* argv[],	tlv_request_t* request){
 		free(dest_id);
 		free(amount);
 
+		request->length += sizeof(req_transfer_t);
+
 	}
 
 	value.header = header;
 	request->value = value;
-	request->length = sizeof(request->value);
+	request->length += sizeof(req_header_t);
 }
 
 int check_number(char* number){

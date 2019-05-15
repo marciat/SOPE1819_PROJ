@@ -215,6 +215,8 @@ int main(int argc, char* argv[]){
 
 	parse_client_inf(argv, request);
 
+	printf("Size:%d", request->length);
+
 	char pid[6];
 	sprintf(pid, "%d", getpid());
 	char fifo_name[USER_FIFO_PATH_LEN];

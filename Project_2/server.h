@@ -4,6 +4,6 @@
 
 void server_help();
 
-void read_srv_fifo(int srv_fifo, tlv_request_t* request)
+void read_srv_fifo(int srv_fifo, tlv_request_t* request);
 
 #endif

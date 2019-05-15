@@ -8,7 +8,6 @@
 #include <stdbool.h>
 #include <semaphore.h>
 #include <pthread.h>
-//#include <mqueue.h>
 
 //Given header files
 #include "constants.h"
@@ -18,6 +17,7 @@
 #include "server.h"
 #include "account.h"
 #include "fifo.h"
+#include "reqqueue.h"
 
 pthread_t* threads;
 //mqd_t order_queue;
@@ -25,7 +25,8 @@ pthread_t* threads;
 sem_t empty, full;
 
 void* bank_office(void* attr){
-	int srv_fifo = *(int*)attr;
+	(void) attr;
+	//int srv_fifo = *(int*)attr;
 
 	while(true){
 		tlv_request_t* request = malloc(MAX_PASSWORD_LEN*2 + 30);
@@ -35,7 +36,7 @@ void* bank_office(void* attr){
 		ret_code_t ret_value;
 		switch(request->type){
 			case OP_CREATE_ACCOUNT:
-				ret_value = create_client_account(request->value);
+				ret_value = create_client_account(&request->value);
 				break;
 			case OP_BALANCE:
 				ret_value = check_balance(request->value.header.account_id, request->value.header.password);
@@ -50,8 +51,11 @@ void* bank_office(void* attr){
 				break;
 			default:
 				//error
+				break;
 		}
 		free(request);
+		//////////TODO TIRAR ISTO O PEDRO DISSE
+		(void) ret_value;
 	}
 
 	return NULL;
@@ -123,15 +127,17 @@ int main(int argc, char* argv[]){
 		threads[i-1] = tid;
 	}
 
-	sem_init(&empty, SHARED, num_bank_offices);
-	//WRITE IN FIFO
-	sem_init(&full, SHARED, 0);
+	sem_init(&empty, 0, num_bank_offices);
+	sem_init(&full, 0, 0);
+
+	Queue* request_queue = ConstructQueue(5000);
 
 	while(true){
 		tlv_request_t* request = malloc(MAX_PASSWORD_LEN*2 + 30);
 		read_srv_fifo(srv_fifo, request);
+		Enqueue(request_queue, request);
+		printf("Size read: %d\n", request->length);
 		sem_wait(&empty);
-
 		sem_post(&full);
 		free(request);
 	}
@@ -148,6 +154,7 @@ int main(int argc, char* argv[]){
 */
 
 	free(threads);
+	DestructQueue(request_queue);
 
 	if(unlink(SERVER_FIFO_PATH)){
 		perror("unlink");
@@ -176,8 +183,11 @@ void read_srv_fifo(int srv_fifo, tlv_request_t* request){
 	}
 
 	int read_value;
+	int read_size = 0;
+	char op_type[4];
+	char length[4];
 
-	while((read_value = read(srv_fifo, request, MAX_PASSWORD_LEN*2 + 30)) == 0){
+	while((read_value = read(srv_fifo, op_type, sizeof(int))) == 0){
 		if(read_value < 0){
 			perror("read server fifo");
 		}
@@ -185,6 +195,32 @@ void read_srv_fifo(int srv_fifo, tlv_request_t* request){
 			perror("pthread_cond_wait");
 		}*/
 	}
+	printf("%s\n", op_type);
+	while((read_value = read(srv_fifo, length, sizeof(uint32_t))) == 0){
+		if(read_value < 0){
+			perror("read server fifo");
+		}
+		/*if(pthread_cond_wait(&srv_cond, &srv_mutex)){
+			perror("pthread_cond_wait");
+		}*/
+	}
+	printf("%d\n", atoi(length));
+
+	read_size+= atoi(length);
+	req_value_t value;
+
+	while((read_value = read(srv_fifo, &value, read_size)) == 0){
+		if(read_value < 0){
+			perror("read server fifo");
+		}
+		/*if(pthread_cond_wait(&srv_cond, &srv_mutex)){
+			perror("pthread_cond_wait");
+		}*/
+	}
+
+	request->type = atoi(op_type);
+	request->length = atoi(length);
+	request->value = value;
 
 	if(pthread_mutex_unlock(&srv_mutex)){
 		perror("pthread_mutex_unlock");
