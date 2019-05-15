@@ -15,6 +15,9 @@ void parse_client_inf(char* argv[],	tlv_request_t* request){
 	req_header_t header;
 	req_value_t value;
 
+	char clear_password[MAX_PASSWORD_LEN+1] = {'\0'};
+	strcpy(header.password, clear_password);
+
 	request->type = atoi(argv[4]);
 	
 	header.pid = getpid();
@@ -29,6 +32,7 @@ void parse_client_inf(char* argv[],	tlv_request_t* request){
 		char *new_id = malloc(50);
 		char *balance = malloc(50);
 		char *password = malloc(50);
+		strcpy(create.password, clear_password);
 
 		token = strtok(argv[5], s);
 		strcpy(new_id, token);
