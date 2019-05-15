@@ -23,31 +23,35 @@ pthread_t* threads;
 //mqd_t order_queue;
 //char order_queue_name[] = "order_queue";
 sem_t empty, full;
-static bool server_run = true;
+bool server_run;
 
 Queue* request_queue;
 
 void* bank_office(){
 
-	while(true){
+	while(server_run){
 		tlv_request_t* request = malloc(MAX_PASSWORD_LEN*2 + 30);
 		sem_wait(&full);
 		*request = Dequeue(request_queue)->info;
 		sem_post(&empty);
 		ret_code_t ret_value;
-		printf("ola do bankoffice\n");
 		switch(request->type){
 			case OP_CREATE_ACCOUNT:
+				printf("create\n");
 				ret_value = create_client_account(&request->value);
 				break;
 			case OP_BALANCE:
+				printf("balance\n");
 				ret_value = check_balance(request->value.header.account_id, request->value.header.password);
 				break;
 			case OP_TRANSFER:
+				printf("transfer\n");
 				ret_value = money_transfer(request->value.header.account_id, request->value.header.password, request->value.transfer.account_id, request->value.transfer.amount);
 				break;
 			case OP_SHUTDOWN:
+				printf("shutdown\n");
 				server_run = false;
+				printf("thread:%d\n", server_run);
 				//SHUTDOWN SERVER - Terminar ciclo dos balcões
 				//Verificar no server se foi recebida a operação (variável global que indica se pode encerrar) 
 				//Recolha de todas as threads
@@ -61,12 +65,20 @@ void* bank_office(){
 		(void) ret_value;
 	}
 
+	printf("ola td bem\n");
+
 	return NULL;
 }
 
 int main(int argc, char* argv[]){
 	setbuf(stdout, NULL);
 	srand(time(NULL));
+
+	server_run = true;
+
+	if(server_run){
+		printf("ola\n");
+	}
 
 	if(argc == 2 && strcmp(argv[1], "--help") == 0){
 		server_help();
@@ -138,13 +150,21 @@ int main(int argc, char* argv[]){
 
 	while(server_run){
 		sem_wait(&empty);
+		printf("main:%d\n", server_run);
 		tlv_request_t* request = malloc(MAX_PASSWORD_LEN*2 + 30);
+		printf("main:%d\n", server_run);
 		read_srv_fifo(srv_fifo, request);
+		printf("main:%d\n", server_run);
 		Enqueue(request_queue, request);
+		printf("main:%d\n", server_run);
 		printf("Size read: %d\n", request->length);
+		printf("main:%d\n", server_run);
 		sem_post(&full);
+		printf("main:%d\n", server_run);
 		free(request);
 	}
+
+	printf("acabou while\n");
 
 	for(int i = 0; i < num_bank_offices; i++){ //Joining all threads before exiting
 		if(pthread_join(threads[i], NULL)){
