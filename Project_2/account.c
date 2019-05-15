@@ -26,7 +26,12 @@ void salt_generator(char* salt){
 	salt[SALT_LEN] = '\0';
 }
 
-int create_client_account(req_value_t* client_information, int thread_id){
+ret_code_t create_client_account(req_value_t* client_information, int thread_id, tlv_reply_t *reply){
+	
+	reply->type = OP_CREATE_ACCOUNT;
+	reply->length = sizeof(rep_header_t);
+	reply->value.header.account_id = client_information->header.account_id;
+	
 	if(client_information->header.account_id == 0 || accounts[client_information->header.account_id].account_id != 0){
 		return RC_ID_IN_USE;
 	}
@@ -45,10 +50,10 @@ int create_client_account(req_value_t* client_information, int thread_id){
 		printf("Log account creation error!\n");
 	}
 
-	return 0;
+	return RC_OK;
 }
 
-int create_admin_account(char* admin_password, int thread_id){
+ret_code_t create_admin_account(char* admin_password, int thread_id){
 	bank_account_t account;
 
 	account.account_id = ADMIN_ACCOUNT_ID;
@@ -64,10 +69,15 @@ int create_admin_account(char* admin_password, int thread_id){
 		printf("Log account creation error!\n");
 	}
 
-	return 0; 
+	return RC_OK; 
 }
 
-int money_transfer(uint32_t account_id, char* password, uint32_t new_account_id, uint32_t amount){
+ret_code_t money_transfer(uint32_t account_id, char* password, uint32_t new_account_id, uint32_t amount, tlv_reply_t *reply){
+	
+	reply->type = OP_TRANSFER;
+	reply->length = sizeof(rep_header_t) + sizeof(rep_transfer_t);
+	reply->value.header.account_id = account_id;
+	
 	if(pthread_mutex_lock(&account_mutex)){
 		perror("pthread_mutex_lock");
 		exit(-1);
@@ -78,6 +88,7 @@ int money_transfer(uint32_t account_id, char* password, uint32_t new_account_id,
 			perror("pthread_mutex_unlock");
 			exit(-1);
 		}
+		reply->value.transfer.balance = 0;
 		return RC_OP_NALLOW;
 	}
 
@@ -87,15 +98,8 @@ int money_transfer(uint32_t account_id, char* password, uint32_t new_account_id,
 			perror("pthread_mutex_unlock");
 			exit(-1);
 		}
+		reply->value.transfer.balance = 0;
 		return RC_ID_NOT_FOUND;
-	}
-
-	if(account_id == new_account_id){
-		if(pthread_mutex_unlock(&account_mutex)){
-			perror("pthread_mutex_unlock");
-			exit(-1);
-		}
-		return RC_SAME_ID;
 	}
 
 	char new_hash[HASH_LEN];
@@ -107,15 +111,25 @@ int money_transfer(uint32_t account_id, char* password, uint32_t new_account_id,
 			perror("pthread_mutex_unlock");
 			exit(-1);
 		}
+		reply->value.transfer.balance = 0;
 		return RC_LOGIN_FAIL;
 	}
 
-	if(accounts[account_id].balance - amount < MIN_BALANCE){
-		//write(STDOUT_FILENO, "OPERATION FAILED: Insufficient Money!!!\n", 40);
+	if(account_id == new_account_id){
 		if(pthread_mutex_unlock(&account_mutex)){
 			perror("pthread_mutex_unlock");
 			exit(-1);
 		}
+		reply->value.transfer.balance = accounts[account_id].balance;
+		return RC_SAME_ID;
+	}
+
+	if(accounts[account_id].balance - amount < MIN_BALANCE){
+		if(pthread_mutex_unlock(&account_mutex)){
+			perror("pthread_mutex_unlock");
+			exit(-1);
+		}
+		reply->value.transfer.balance = accounts[account_id].balance;
 		return RC_NO_FUNDS;
 	}
 
@@ -124,6 +138,7 @@ int money_transfer(uint32_t account_id, char* password, uint32_t new_account_id,
 			perror("pthread_mutex_unlock");
 			exit(-1);
 		}
+		reply->value.transfer.balance = accounts[account_id].balance;
 		return RC_TOO_HIGH;	
 	}
 
@@ -135,10 +150,16 @@ int money_transfer(uint32_t account_id, char* password, uint32_t new_account_id,
 		exit(-1);
 	}
 
+	reply->value.transfer.balance = accounts[account_id].balance;
+
 	return RC_OK;
 }
 
-int check_balance(uint32_t account_id, char* password){
+ret_code_t check_balance(uint32_t account_id, char* password, tlv_reply_t *reply){
+
+	reply->type = OP_BALANCE;
+	reply->length = sizeof(rep_header_t) + sizeof(rep_balance_t);
+	reply->value.header.account_id = account_id;
 
 	if(pthread_mutex_lock(&account_mutex)){
 		perror("pthread_mutex_lock");

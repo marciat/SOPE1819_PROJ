@@ -250,7 +250,7 @@ int main(int argc, char *argv[])
 
 	parse_client_inf(argv, request);
 
-	printf("Size:%d", request->length);
+	printf("Size:%d\n", request->length);
 
 	char pid[6];
 	if (getpid() < 10000)
@@ -298,7 +298,10 @@ int main(int argc, char *argv[])
 		exit(-1);
 	}
 
-	//read_user_fifo()
+	tlv_reply_t reply;
+
+	read_user_fifo(user_fifo, &reply);
+
 
 	if (close(user_fifo))
 	{
@@ -357,4 +360,40 @@ void write_srv_fifo(int srv_fifo, tlv_request_t *request)
 		perror("write");
 		exit(-1);
 	}
+}
+
+void read_user_fifo(int usr_fifo, tlv_reply_t *reply){
+
+	int read_value;
+	int read_size = 0;
+	uint32_t op_type;
+	uint32_t length;
+
+	while((read_value = read(usr_fifo, &op_type, sizeof(int))) == 0){
+		if(read_value < 0){
+			perror("read user fifo");
+		}
+	}
+	printf("%d\n", op_type);
+	while((read_value = read(usr_fifo, &length, sizeof(uint32_t))) == 0){
+		if(read_value < 0){
+			perror("read user fifo");
+		}
+	}
+	printf("%d\n", length);
+
+	read_size+= length;
+	rep_value_t value;
+
+	while((read_value = read(usr_fifo, &value, read_size)) == 0){
+		if(read_value < 0){
+			perror("read user fifo");
+		}
+	}
+
+	reply->type = op_type;
+	reply->length = length;
+	reply->value = value;
+
+	printf("id sent: %d\n", reply->value.header.account_id);
 }

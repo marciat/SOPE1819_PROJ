@@ -7,13 +7,13 @@
 #include "parse.h"
 #include "types.h"
 
-int create_client_account(req_value_t* client_information, int thread_id);
+ret_code_t create_client_account(req_value_t* client_information, int thread_id, tlv_reply_t *reply);
 
-int create_admin_account(char* admin_password, int thread_id);
+ret_code_t create_admin_account(char* admin_password, int thread_id);
 
-int check_balance(uint32_t account_id, char* password);
+ret_code_t check_balance(uint32_t account_id, char* password, tlv_reply_t *reply);
 
-int money_transfer(uint32_t account_id, char* password, uint32_t new_account_id, uint32_t balance);
+ret_code_t money_transfer(uint32_t account_id, char* password, uint32_t new_account_id, uint32_t balance, tlv_reply_t *reply);
 
 void salt_generator(char* salt);
 

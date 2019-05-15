@@ -41,22 +41,34 @@ void* bank_office(){
 		*request = Dequeue(request_queue)->info;
 		sem_post(&empty);
 		ret_code_t ret_value;
+		tlv_reply_t reply;
 		switch(request->type){
 			case OP_CREATE_ACCOUNT:
 				printf("create\n");
-				ret_value = create_client_account(&request->value, pthread_self());
+				ret_value = create_client_account(&request->value, pthread_self(), &reply);
+				reply.value.header.ret_code = ret_value;
+				send_reply(request, &reply);
 				break;
 			case OP_BALANCE:
 				printf("balance\n");
-				ret_value = check_balance(request->value.header.account_id, request->value.header.password);
+				ret_value = check_balance(request->value.header.account_id, request->value.header.password, &reply);
+				reply.value.header.ret_code = ret_value;
+				send_reply(request, &reply);
 				break;
 			case OP_TRANSFER:
 				printf("transfer\n");
-				ret_value = money_transfer(request->value.header.account_id, request->value.header.password, request->value.transfer.account_id, request->value.transfer.amount);
+				ret_value = money_transfer(request->value.header.account_id, request->value.header.password, request->value.transfer.account_id, request->value.transfer.amount, &reply);
+				reply.value.header.ret_code = ret_value;
+				send_reply(request, &reply);
 				break;
 			case OP_SHUTDOWN:
 				printf("shutdown\n");
 				server_run = false;
+				reply.type = OP_SHUTDOWN;
+				reply.length = sizeof(rep_header_t);
+				reply.value.header.account_id = 0;
+				reply.value.header.ret_code = RC_OK;
+				send_reply(request, &reply);
 				printf("thread:%d\n", server_run);
 				//SHUTDOWN SERVER - Terminar ciclo dos balcões
 				//Verificar no server se foi recebida a operação (variável global que indica se pode encerrar) 
@@ -279,4 +291,33 @@ void read_srv_fifo(int srv_fifo, tlv_request_t* request){
 	if(pthread_mutex_unlock(&srv_mutex)){
 		perror("pthread_mutex_unlock");
 	}
+}
+
+void send_reply(tlv_request_t* request, tlv_reply_t* reply){
+	char pid[6];
+	if (request->value.header.pid < 10000)
+	{
+		sprintf(pid, "0%d", request->value.header.pid);
+	}
+	else
+	{
+		sprintf(pid, "%d", request->value.header.pid);
+	}
+	char fifo_name[USER_FIFO_PATH_LEN];
+	strcpy(fifo_name, USER_FIFO_PATH_PREFIX);
+	strcat(fifo_name, pid);
+
+	int usr_fifo = open(fifo_name, O_WRONLY | O_APPEND); //Opening server FIFO for writing
+	if (usr_fifo < 0)
+	{
+		perror("open user fifo");
+		exit(-1);
+	}
+
+	if(write(usr_fifo, reply, sizeof(int)+sizeof(uint32_t)+reply->length) < 0){
+		perror("write to user fifo");
+		exit(-1);
+	}
+
+	printf("id sent: %d\n", reply->value.header.account_id);
 }
