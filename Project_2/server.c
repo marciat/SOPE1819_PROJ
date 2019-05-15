@@ -31,14 +31,31 @@ void* bank_office(){
 
 	while(server_run){
 		tlv_request_t* request = malloc(MAX_PASSWORD_LEN*2 + 30);
+		if(logSyncMechSem(server_logfile, pthread_self(), SYNC_OP_MUTEX_LOCK, SYNC_ROLE_CONSUMER, 0, 0) < 0){
+			printf("Log sync mech sum error!\n");
+		}
 		pthread_mutex_lock(&server_run_mutex);
 		if(!server_run){
+			if(logSyncMechSem(server_logfile, pthread_self(), SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_CONSUMER, 0, 0) < 0){
+				printf("Log sync mech sum error!\n");
+			}
 			pthread_mutex_unlock(&server_run_mutex);
 			return NULL;
 		}
+		if(logSyncMechSem(server_logfile, pthread_self(), SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_CONSUMER, 0, 0) < 0){
+			printf("Log sync mech sum error!\n");
+		}
 		pthread_mutex_unlock(&server_run_mutex);
+
+		if(logSyncMechSem(server_logfile, pthread_self(), SYNC_OP_SEM_WAIT, SYNC_ROLE_CONSUMER, 0, 0) < 0){
+			printf("Log sync mech sum error!\n");
+		}
 		sem_wait(&full);
 		*request = Dequeue(request_queue)->info;
+		
+		if(logSyncMechSem(server_logfile, pthread_self(), SYNC_OP_SEM_POST, SYNC_ROLE_CONSUMER, 0, 0) < 0){
+			printf("Log sync mech sum error!\n");
+		}
 		sem_post(&empty);
 		ret_code_t ret_value;
 		tlv_reply_t reply;
@@ -92,7 +109,7 @@ int main(int argc, char* argv[]){
 	setbuf(stdout, NULL);
 	srand(time(NULL));
 
-	server_logfile = open(SERVER_LOGFILE, O_WRONLY | O_CREAT, 0777); //OPENING SERVER LOGFILE
+	server_logfile = open(SERVER_LOGFILE, O_WRONLY | O_APPEND | O_CREAT, 0777); //OPENING SERVER LOGFILE
 	if(server_logfile < 0){
 		perror("open server logfile");
 		exit(-1);
@@ -132,15 +149,25 @@ int main(int argc, char* argv[]){
 	int admin_return = create_admin_account(argv[2], 0); //TODO Change return value handler
 	printf("%d\n", admin_return); //Delete this
 
+	if(logSyncMechSem(server_logfile, 0, SYNC_OP_MUTEX_INIT, SYNC_ROLE_PRODUCER, 0, 0) < 0){
+		printf("Log sync mech sum error!\n");
+	}
 	if(pthread_mutex_init(&account_mutex, NULL)){
 		perror("pthread_mutex_init");
 		exit(-1);
+	}
+
+	if(logSyncMechSem(server_logfile, 0, SYNC_OP_MUTEX_INIT, SYNC_ROLE_PRODUCER, 0, 0) < 0){
+		printf("Log sync mech sum error!\n");
 	}
 	if(pthread_mutex_init(&srv_mutex, NULL)){
 		perror("pthread_mutex_init");
 		exit(-1);
 	}
 
+	if(logSyncMechSem(server_logfile, 0, SYNC_OP_MUTEX_INIT, SYNC_ROLE_PRODUCER, 0, 0) < 0){
+		printf("Log sync mech sum error!\n");
+	}
 	if(pthread_mutex_init(&server_run_mutex, NULL)){
 		perror("pthread_mutex_init");
 		exit(-1);
@@ -173,10 +200,20 @@ int main(int argc, char* argv[]){
 		threads[i-1] = tid;
 	}
 
+	if(logSyncMechSem(server_logfile, 0, SYNC_OP_SEM_INIT, SYNC_ROLE_PRODUCER, 0, 0) < 0){
+		printf("Log sync mech sum error!\n");
+	}
 	sem_init(&empty, 0, num_bank_offices);
+
+	if(logSyncMechSem(server_logfile, 0, SYNC_OP_SEM_INIT, SYNC_ROLE_PRODUCER, 0, 0) < 0){
+		printf("Log sync mech sum error!\n");
+	}
 	sem_init(&full, 0, 0);
 
 	while(server_run){
+		if(logSyncMechSem(server_logfile, 0, SYNC_OP_SEM_WAIT, SYNC_ROLE_PRODUCER, 0, 0) < 0){
+			printf("Log sync mech sum error!\n");
+		}
 		sem_wait(&empty);
 		if(!server_run){
 			break;
@@ -193,6 +230,10 @@ int main(int argc, char* argv[]){
 		printf("main:%d\n", server_run);
 		printf("Size read: %d\n", request->length);
 		printf("main:%d\n", server_run);
+		
+		if(logSyncMechSem(server_logfile, 0, SYNC_OP_SEM_POST, SYNC_ROLE_PRODUCER, 0, 0) < 0){
+			printf("Log sync mech sum error!\n");
+		}
 		sem_post(&full);
 		printf("main:%d\n", server_run);
 		free(request);
@@ -244,6 +285,9 @@ void server_help(){
 }
 
 void read_srv_fifo(int srv_fifo, tlv_request_t* request){
+	if(logSyncMechSem(server_logfile, 0, SYNC_OP_MUTEX_LOCK, SYNC_ROLE_PRODUCER, 0, 0) < 0){
+		printf("Log sync mech sum error!\n");
+	}
 	if(pthread_mutex_lock(&srv_mutex)){
 		perror("pthread_mutex_lock");
 	}
@@ -288,6 +332,9 @@ void read_srv_fifo(int srv_fifo, tlv_request_t* request){
 	request->length = length;
 	request->value = value;
 
+	if(logSyncMechSem(server_logfile, 0, SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_PRODUCER, 0, 0) < 0){
+		printf("Log sync mech sum error!\n");
+	}
 	if(pthread_mutex_unlock(&srv_mutex)){
 		perror("pthread_mutex_unlock");
 	}

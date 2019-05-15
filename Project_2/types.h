@@ -35,6 +35,7 @@ typedef enum sync_mech_op_type {
   SYNC_OP_MUTEX_LOCK,    // pthread_mutex_lock() call
   SYNC_OP_MUTEX_UNLOCK,  // pthread_mutex_unlock() call
   SYNC_OP_MUTEX_TRYLOCK, // pthread_mutex_trylock() call
+  SYNC_OP_MUTEX_INIT,    // pthread_mutex_init() call
   SYNC_OP_COND_SIGNAL,   // pthread_cond_signal() call
   SYNC_OP_COND_WAIT,     // pthread_cond_wait() call
   SYNC_OP_SEM_INIT,      // pthread_sem_init() call
@@ -44,10 +45,10 @@ typedef enum sync_mech_op_type {
 } sync_mech_op_t;
 
 typedef enum sync_mech_role {
-  SYNC_ROLE_PRODUCER,    // producer (main thread)
-  SYNC_ROLE_CONSUMER,    // consumer (bank office threads)
-  SYNC_ROLE_ACCOUNT,     // account related
-  __SYNC_ROLE_MAX_NUMBER // enables to determine how many sync roles are defined
+  SYNC_ROLE_PRODUCER,       // producer (main thread)
+  SYNC_ROLE_CONSUMER,       // consumer (bank office threads)
+  SYNC_ROLE_ACCOUNT,        // account related
+  __SYNC_ROLE_MAX_NUMBER    // enables to determine how many sync roles are defined
 } sync_role_t;
 
 /**
