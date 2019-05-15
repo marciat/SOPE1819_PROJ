@@ -23,17 +23,19 @@ pthread_t* threads;
 //mqd_t order_queue;
 //char order_queue_name[] = "order_queue";
 sem_t empty, full;
+static bool server_run = true;
 
-void* bank_office(void* attr){
-	(void) attr;
-	//int srv_fifo = *(int*)attr;
+Queue* request_queue;
+
+void* bank_office(){
 
 	while(true){
 		tlv_request_t* request = malloc(MAX_PASSWORD_LEN*2 + 30);
 		sem_wait(&full);
-		//READ FROM FIFO
+		*request = Dequeue(request_queue)->info;
 		sem_post(&empty);
 		ret_code_t ret_value;
+		printf("ola do bankoffice\n");
 		switch(request->type){
 			case OP_CREATE_ACCOUNT:
 				ret_value = create_client_account(&request->value);
@@ -45,6 +47,7 @@ void* bank_office(void* attr){
 				ret_value = money_transfer(request->value.header.account_id, request->value.header.password, request->value.transfer.account_id, request->value.transfer.amount);
 				break;
 			case OP_SHUTDOWN:
+				server_run = false;
 				//SHUTDOWN SERVER - Terminar ciclo dos balcões
 				//Verificar no server se foi recebida a operação (variável global que indica se pode encerrar) 
 				//Recolha de todas as threads
@@ -118,9 +121,12 @@ int main(int argc, char* argv[]){
 		perror("open server fifo");
 		exit(-1);
 	}
+
+	request_queue = ConstructQueue(5000);
+
 	for(int i = 1; i <= num_bank_offices; i++){
 		pthread_t tid = i;
-		if(pthread_create(&tid, NULL, bank_office, &srv_fifo)){
+		if(pthread_create(&tid, NULL, bank_office, NULL)){
 			perror("pthread_create");
 			exit(-1);
 		}
@@ -130,18 +136,16 @@ int main(int argc, char* argv[]){
 	sem_init(&empty, 0, num_bank_offices);
 	sem_init(&full, 0, 0);
 
-	Queue* request_queue = ConstructQueue(5000);
-
-	while(true){
+	while(server_run){
+		sem_wait(&empty);
 		tlv_request_t* request = malloc(MAX_PASSWORD_LEN*2 + 30);
 		read_srv_fifo(srv_fifo, request);
 		Enqueue(request_queue, request);
 		printf("Size read: %d\n", request->length);
-		sem_wait(&empty);
 		sem_post(&full);
 		free(request);
 	}
-/*
+
 	for(int i = 0; i < num_bank_offices; i++){ //Joining all threads before exiting
 		if(pthread_join(threads[i], NULL)){
 			perror("pthread_join");
@@ -151,7 +155,7 @@ int main(int argc, char* argv[]){
 	if(close(srv_fifo)){
 		perror("close server fifo");
 	}
-*/
+
 
 	free(threads);
 	DestructQueue(request_queue);
