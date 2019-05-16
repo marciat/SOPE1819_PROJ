@@ -121,28 +121,21 @@ void* bank_office(void* index){
 				}
 				break;
 			case OP_SHUTDOWN:
-				if(request->value.header.account_id == 0){
+				ret_value = shutdown_server(request->value.header.account_id, request->value.header.password, request->value.header.op_delay_ms, &reply, thread_index);
+				
+				if(ret_value == RC_OK){
 					pthread_mutex_lock(&server_run_mutex);
 					server_run = false;
 					pthread_mutex_unlock(&server_run_mutex);
 					close(write_fifo);
-					reply.type = OP_SHUTDOWN;
-					reply.length = sizeof(rep_header_t);
-					reply.value.header.account_id = 0;
-					reply.value.header.ret_code = RC_OK;
-					send_reply(request, &reply);
-					if(logReply(server_logfile, thread_index, &reply) < 0){
-						printf("Log reply error!\n");
-					}	
-					/*int i = 0;
-					while(i < MAX_BANK_OFFICES){
-						sem_post(&full);
-						sem_post(&empty);
-						i++;
-					}*/
-					//pthread_cond_broadcast(&srv_cond);
-
-				}
+				}			
+				
+				reply.value.shutdown.active_offices = 0;
+				reply.value.header.ret_code = ret_value;
+				send_reply(request, &reply);
+				if(logReply(server_logfile, thread_index, &reply) < 0){
+					printf("Log reply error!\n");
+				}	
 				//SHUTDOWN SERVER - Terminar ciclo dos balcões
 				//Verificar no server se foi recebida a operação (variável global que indica se pode encerrar) 
 				//Recolha de todas as threads
