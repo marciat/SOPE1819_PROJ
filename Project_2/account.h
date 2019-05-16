@@ -21,7 +21,7 @@ void salt_generator(char* salt);
 
 void get_hash(char* password, char* salt, char* hash);
 
-pthread_mutex_t account_mutex;// = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t account_mutex[MAX_BANK_ACCOUNTS];
 
 int server_logfile;
 

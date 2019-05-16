@@ -129,7 +129,7 @@ void* bank_office(void* index){
 					pthread_mutex_unlock(&server_run_mutex);
 					close(write_fifo);
 				}			
-				
+
 				reply.value.shutdown.active_offices = 0;
 				reply.value.header.ret_code = ret_value;
 				send_reply(request, &reply);
@@ -197,9 +197,11 @@ int main(int argc, char* argv[]){
 	if(logSyncMech(server_logfile, 0, SYNC_OP_MUTEX_INIT, SYNC_ROLE_PRODUCER, 0) < 0){
 		printf("Log sync mech sum error!\n");
 	}
-	if(pthread_mutex_init(&account_mutex, NULL)){
-		perror("pthread_mutex_init");
-		exit(-1);
+	for(int i = 0; i < MAX_BANK_ACCOUNTS; i++){
+		if(pthread_mutex_init(&account_mutex[i], NULL)){
+			perror("pthread_mutex_init");
+			exit(-1);
+		}
 	}
 
 	if(logSyncMech(server_logfile, 0, SYNC_OP_MUTEX_INIT, SYNC_ROLE_PRODUCER, 0) < 0){
