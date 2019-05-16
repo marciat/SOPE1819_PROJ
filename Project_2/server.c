@@ -430,14 +430,12 @@ void send_reply(tlv_request_t* request, tlv_reply_t* reply){
 	int usr_fifo = open(fifo_name, O_WRONLY | O_APPEND); //Opening server FIFO for writing
 	if (usr_fifo < 0)
 	{
-		perror("open user fifo");
-		exit(-1);
-	}
+		reply->value.header.ret_code = RC_SRV_TIMEOUT;
+	}else{
 
-	if(write(usr_fifo, reply, sizeof(int)+sizeof(uint32_t)+reply->length) < 0){
-		perror("write to user fifo");
-		exit(-1);
+		if(write(usr_fifo, reply, sizeof(int)+sizeof(uint32_t)+reply->length) < 0){
+			perror("write to user fifo");
+			exit(-1);
+		}
 	}
-
-	printf("id sent: %d\n", reply->value.header.account_id);
 }

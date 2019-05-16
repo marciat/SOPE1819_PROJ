@@ -5,6 +5,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <errno.h>
+#include <stdbool.h>
 
 //Given header files
 #include "types.h"
@@ -15,10 +17,13 @@
 #include "user.h"
 #include "fifo.h"
 
+bool timeout;
+int user_fifo;
+
 int main(int argc, char *argv[])
 {
 	setbuf(stdout, NULL);
-
+	timeout = false;
 	int user_logfile = open(USER_LOGFILE, O_WRONLY | O_APPEND | O_CREAT, 0777); //OPENING USER LOGFILE
 	if(user_logfile < 0){
 		perror("open user logfile");
@@ -250,8 +255,6 @@ int main(int argc, char *argv[])
 
 	parse_client_inf(argv, request);
 
-	printf("Size:%d\n", request->length);
-
 	char pid[6];
 	if (getpid() < 10000)
 	{
@@ -291,7 +294,22 @@ int main(int argc, char *argv[])
 		exit(-1);
 	}
 
-	int user_fifo = open(fifo_name, O_RDONLY);
+	
+
+	printf("sdasa\n");
+	user_fifo = open(fifo_name, O_RDONLY | O_NONBLOCK);
+
+	int flags;
+	flags = O_RDONLY;
+	fcntl(user_fifo, F_SETFL, flags);
+
+	pthread_t tid;
+
+		if(pthread_create(&tid, NULL, zzz, NULL)){
+			perror("pthread_create");
+			exit(-1);
+		}
+	printf("sdasa\n");
 	if (user_fifo < 0)
 	{
 		perror("open user fifo");
@@ -302,6 +320,7 @@ int main(int argc, char *argv[])
 
 	read_user_fifo(user_fifo, &reply);
 
+	if(!timeout)
 	if(logReply(user_logfile, getpid(), &reply) < 0){
 		printf("Log reply error!\n");
 	}
@@ -324,6 +343,70 @@ int main(int argc, char *argv[])
 	}
 
 	return 0;
+}
+
+void* zzz(){
+	printf("oladothread\n");
+	sleep(FIFO_TIMEOUT_SECS);
+	printf("upslseep\n");
+	int flags;
+	flags = fcntl(user_fifo, F_GETFL, 0);
+	flags |= O_NONBLOCK;
+	fcntl(user_fifo, F_SETFL, flags);
+	timeout = true;
+	pthread_exit(NULL);
+}
+
+void write_srv_fifo(int srv_fifo, tlv_request_t *request)
+{
+	if (write(srv_fifo, request, request->length + sizeof(request->type) + sizeof(request->length)) < 0)
+	{
+		perror("write");
+		exit(-1);
+	}
+}
+
+void read_user_fifo(int usr_fifo, tlv_reply_t *reply){
+
+	int read_value;
+	int read_size = 0;
+	uint32_t op_type;
+	uint32_t length;
+
+	printf("sdasa\n");
+	while((read_value = read(usr_fifo, &op_type, sizeof(int))) == 0 && !timeout){
+		if(read_value < 0){
+			perror("read user fifo");
+		}
+	}
+
+	if(timeout){
+		printf("timeout\n");
+		return;
+	}
+
+	printf("%d\n", op_type);
+	while((read_value = read(usr_fifo, &length, sizeof(uint32_t))) == 0){
+		if(read_value < 0){
+			perror("read user fifo");
+		}
+	}
+	printf("%d\n", length);
+
+	read_size+= length;
+	rep_value_t value;
+
+	while((read_value = read(usr_fifo, &value, read_size)) == 0){
+		if(read_value < 0){
+			perror("read user fifo");
+		}
+	}
+
+	reply->type = op_type;
+	reply->length = length;
+	reply->value = value;
+
+	printf("id sent: %d\n", reply->value.header.account_id);
 }
 
 void user_help()
@@ -354,49 +437,4 @@ void user_help()
 
 	printf("list_of_arguments:\n");
 	printf("	Arguments requested by the operation.\n");
-}
-
-void write_srv_fifo(int srv_fifo, tlv_request_t *request)
-{
-	if (write(srv_fifo, request, request->length + sizeof(request->type) + sizeof(request->length)) < 0)
-	{
-		perror("write");
-		exit(-1);
-	}
-}
-
-void read_user_fifo(int usr_fifo, tlv_reply_t *reply){
-
-	int read_value;
-	int read_size = 0;
-	uint32_t op_type;
-	uint32_t length;
-
-	while((read_value = read(usr_fifo, &op_type, sizeof(int))) == 0){
-		if(read_value < 0){
-			perror("read user fifo");
-		}
-	}
-	printf("%d\n", op_type);
-	while((read_value = read(usr_fifo, &length, sizeof(uint32_t))) == 0){
-		if(read_value < 0){
-			perror("read user fifo");
-		}
-	}
-	printf("%d\n", length);
-
-	read_size+= length;
-	rep_value_t value;
-
-	while((read_value = read(usr_fifo, &value, read_size)) == 0){
-		if(read_value < 0){
-			perror("read user fifo");
-		}
-	}
-
-	reply->type = op_type;
-	reply->length = length;
-	reply->value = value;
-
-	printf("id sent: %d\n", reply->value.header.account_id);
 }
