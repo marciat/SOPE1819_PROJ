@@ -36,6 +36,12 @@ ret_code_t create_client_account(req_value_t* client_information, int thread_id,
 		perror("pthread_mutex_lock");
 		exit(-1);
 	}
+
+
+	if(logSyncDelay(server_logfile, thread_id, client_information->header.account_id, delay)<0){
+		printf("Log sync delay error!\n");
+	}
+	
 	usleep(delay*1000);
 
 	reply->type = OP_CREATE_ACCOUNT;
@@ -160,6 +166,10 @@ ret_code_t money_transfer(uint32_t account_id, char* password, uint32_t new_acco
 		}
 	}
 
+
+	if(logSyncDelay(server_logfile, thread_id, account_id, delay)<0){
+		printf("Log sync delay error!\n");
+	}
 
 	usleep(delay*1000);
 
@@ -341,6 +351,12 @@ ret_code_t check_balance(uint32_t account_id, char* password, uint32_t delay, tl
 		perror("pthread_mutex_lock");
 		exit(-1);
 	}
+
+
+	if(logSyncDelay(server_logfile, thread_id, account_id, delay)<0){
+		printf("Log sync delay error!\n");
+	}
+
 	usleep(delay*1000);
 
 	reply->type = OP_BALANCE;
@@ -409,6 +425,11 @@ ret_code_t shutdown_server(uint32_t account_id, char* password, uint32_t delay, 
 		perror("pthread_mutex_lock");
 		exit(-1);
 	}
+
+	if(logDelay(server_logfile, thread_id, delay)<0){
+		printf("Log delay error!\n");
+	}
+
 	usleep(delay*1000);
 
 	reply->type = OP_SHUTDOWN;
