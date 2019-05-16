@@ -24,7 +24,7 @@ pthread_t* threads;
 sem_t empty, full;
 bool server_run;
 pthread_mutex_t server_run_mutex;
-pthread_cond_t srv_cond;
+pthread_mutex_t request_queue_mutex;
 int write_fifo;
 
 Queue* request_queue;
@@ -71,14 +71,22 @@ void* bank_office(void* index){
 		}
 		pthread_mutex_unlock(&server_run_mutex);
 		
+		if(logSyncMech(server_logfile, thread_index, SYNC_OP_MUTEX_LOCK, SYNC_ROLE_CONSUMER, pthread_self()) < 0){
+			printf("Log sync mech sum error!\n");
+		}
+		pthread_mutex_lock(&request_queue_mutex);
+
 		*request = Dequeue(request_queue)->info;
-		///////////////////////////
-		///////////////////////////
+
+		if(logSyncMech(server_logfile, thread_index, SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_CONSUMER, pthread_self()) < 0){
+			printf("Log sync mech sum error!\n");
+		}
+		pthread_mutex_unlock(&request_queue_mutex);
+		
 		if(request == NULL){
 			break;
 		}
-		///////////////////////////
-		///////////////////////////
+
 		if(sem_post(&empty)){
 			perror("sem_post");
 			pthread_exit(NULL);
@@ -136,9 +144,6 @@ void* bank_office(void* index){
 				if(logReply(server_logfile, thread_index, &reply) < 0){
 					printf("Log reply error!\n");
 				}	
-				//SHUTDOWN SERVER - Terminar ciclo dos balcões
-				//Verificar no server se foi recebida a operação (variável global que indica se pode encerrar) 
-				//Recolha de todas as threads
 				break;
 			default:
 				//error
@@ -239,6 +244,16 @@ int main(int argc, char* argv[]){
 		exit(-1);
 	}
 
+	if(logSyncMech(server_logfile, 0, SYNC_OP_MUTEX_INIT, SYNC_ROLE_PRODUCER, 0) < 0){
+		printf("Log sync mech sum error!\n");
+	}
+
+	if(pthread_mutex_init(&request_queue_mutex, NULL)){
+		perror("pthread_mutex_init");
+		exit(-1);
+	}
+	
+
 	request_queue = ConstructQueue(5000);
 
 	int* thread_index = malloc(sizeof(int)*num_bank_offices);
@@ -299,7 +314,19 @@ int main(int argc, char* argv[]){
 			perror("sem_wait");
 			exit(-1);
 		}
+
+		if(logSyncMech(server_logfile, 0, SYNC_OP_MUTEX_LOCK, SYNC_ROLE_PRODUCER, 0) < 0){
+			printf("Log sync mech sum error!\n");
+		}
+		pthread_mutex_lock(&request_queue_mutex);
+
+
 		Enqueue(request_queue, request);
+
+		if(logSyncMech(server_logfile, 0, SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_PRODUCER, 0) < 0){
+			printf("Log sync mech sum error!\n");
+		}
+		pthread_mutex_unlock(&request_queue_mutex);
 		
 		if(sem_post(&full)){
 			perror("sem_post");
@@ -312,6 +339,8 @@ int main(int argc, char* argv[]){
 		if(logSyncMechSem(server_logfile, 0, SYNC_OP_SEM_POST, SYNC_ROLE_PRODUCER, request->value.header.pid, sem_t_value) < 0){
 			printf("Log sync mech sum error!\n");
 		}
+
+		pthread_mutex_lock(&server_run_mutex);
 
 		free(request);
 		if(!server_run){
