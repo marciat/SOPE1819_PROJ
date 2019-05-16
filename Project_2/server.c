@@ -24,6 +24,7 @@ pthread_t* threads;
 sem_t empty, full;
 bool server_run;
 pthread_mutex_t server_run_mutex;
+pthread_cond_t srv_cond;
 
 Queue* request_queue;
 
@@ -51,6 +52,12 @@ void* bank_office(){
 			printf("Log sync mech sum error!\n");
 		}
 		sem_wait(&full);
+
+		while(isEmpty(request_queue)){
+			if(pthread_cond_wait(&srv_cond, &srv_mutex)){
+				perror("pthread_cond_wait");
+			}
+		}
 		*request = Dequeue(request_queue)->info;
 		
 		if(logSyncMechSem(server_logfile, pthread_self(), SYNC_OP_SEM_POST, SYNC_ROLE_CONSUMER, 0, 0) < 0){
@@ -108,8 +115,6 @@ void* bank_office(){
 				break;
 		}
 		free(request);
-		//////////TODO TIRAR ISTO O PEDRO DISSE
-		(void) ret_value;
 	}
 
 	printf("ola td bem\n");
