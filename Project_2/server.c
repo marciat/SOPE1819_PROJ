@@ -29,35 +29,44 @@ Queue* request_queue;
 
 void* bank_office(void* index){
 	int thread_index = *(int*)index;
-
+	int sem_t_value;
 	while(server_run){
 		tlv_request_t* request = malloc(MAX_PASSWORD_LEN*2 + 30);
-		if(logSyncMechSem(server_logfile, thread_index, SYNC_OP_MUTEX_LOCK, SYNC_ROLE_CONSUMER, 0, 0) < 0){
+		if(logSyncMech(server_logfile, thread_index, SYNC_OP_MUTEX_LOCK, SYNC_ROLE_CONSUMER, pthread_self()) < 0){
 			printf("Log sync mech sum error!\n");
 		}
 		pthread_mutex_lock(&server_run_mutex);
 		if(!server_run){
-			if(logSyncMechSem(server_logfile, thread_index, SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_CONSUMER, 0, 0) < 0){
+			if(logSyncMech(server_logfile, thread_index, SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_CONSUMER, pthread_self()) < 0){
 				printf("Log sync mech sum error!\n");
 			}
 			pthread_mutex_unlock(&server_run_mutex);
 			return NULL;
 		}
-		if(logSyncMechSem(server_logfile, thread_index, SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_CONSUMER, 0, 0) < 0){
+		if(logSyncMech(server_logfile, thread_index, SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_CONSUMER, pthread_self()) < 0){
 			printf("Log sync mech sum error!\n");
 		}
 		pthread_mutex_unlock(&server_run_mutex);
 
-		if(logSyncMechSem(server_logfile, thread_index, SYNC_OP_SEM_WAIT, SYNC_ROLE_CONSUMER, 0, 0) < 0){
+		if(sem_getvalue(&full, &sem_t_value) < 0){ 
+			perror("sem_getvalue");
+			exit(-1);
+		}
+		if(logSyncMechSem(server_logfile, thread_index, SYNC_OP_SEM_WAIT, SYNC_ROLE_CONSUMER, pthread_self(), sem_t_value) < 0){
 			printf("Log sync mech sum error!\n");
 		}
 		sem_wait(&full);
 		*request = Dequeue(request_queue)->info;
 		
-		if(logSyncMechSem(server_logfile, thread_index, SYNC_OP_SEM_POST, SYNC_ROLE_CONSUMER, 0, 0) < 0){
+		sem_post(&empty);
+		if(sem_getvalue(&full, &sem_t_value) < 0){ 
+			perror("sem_getvalue");
+			exit(-1);
+		}
+		if(logSyncMechSem(server_logfile, thread_index, SYNC_OP_SEM_POST, SYNC_ROLE_CONSUMER, request->value.header.pid, sem_t_value) < 0){
 			printf("Log sync mech sum error!\n");
 		}
-		sem_post(&empty);
+
 		ret_code_t ret_value;
 		tlv_reply_t reply;
 		switch(request->type){
@@ -72,7 +81,7 @@ void* bank_office(void* index){
 				break;
 			case OP_BALANCE:
 				printf("balance\n");
-				ret_value = check_balance(request->value.header.account_id, request->value.header.password, request->value.header.op_delay_ms, &reply);
+				ret_value = check_balance(request->value.header.account_id, request->value.header.password, request->value.header.op_delay_ms, &reply, thread_index);
 				reply.value.header.ret_code = ret_value;
 				send_reply(request, &reply);
 				if(logReply(server_logfile, thread_index, &reply) < 0){
@@ -81,7 +90,7 @@ void* bank_office(void* index){
 				break;
 			case OP_TRANSFER:
 				printf("transfer\n");
-				ret_value = money_transfer(request->value.header.account_id, request->value.header.password, request->value.transfer.account_id, request->value.transfer.amount, request->value.header.op_delay_ms, &reply);
+				ret_value = money_transfer(request->value.header.account_id, request->value.header.password, request->value.transfer.account_id, request->value.transfer.amount, request->value.header.op_delay_ms, &reply, thread_index);
 				reply.value.header.ret_code = ret_value;
 				send_reply(request, &reply);
 				if(logReply(server_logfile, thread_index, &reply) < 0){
@@ -158,7 +167,7 @@ int main(int argc, char* argv[]){
 	int admin_return = create_admin_account(argv[2], 0); //TODO Change return value handler
 	printf("%d\n", admin_return); //TODO delete this
 
-	if(logSyncMechSem(server_logfile, 0, SYNC_OP_MUTEX_INIT, SYNC_ROLE_PRODUCER, 0, 0) < 0){
+	if(logSyncMech(server_logfile, 0, SYNC_OP_MUTEX_INIT, SYNC_ROLE_PRODUCER, 0) < 0){
 		printf("Log sync mech sum error!\n");
 	}
 	if(pthread_mutex_init(&account_mutex, NULL)){
@@ -166,7 +175,7 @@ int main(int argc, char* argv[]){
 		exit(-1);
 	}
 
-	if(logSyncMechSem(server_logfile, 0, SYNC_OP_MUTEX_INIT, SYNC_ROLE_PRODUCER, 0, 0) < 0){
+	if(logSyncMech(server_logfile, 0, SYNC_OP_MUTEX_INIT, SYNC_ROLE_PRODUCER, 0) < 0){
 		printf("Log sync mech sum error!\n");
 	}
 	if(pthread_mutex_init(&srv_mutex, NULL)){
@@ -174,7 +183,7 @@ int main(int argc, char* argv[]){
 		exit(-1);
 	}
 
-	if(logSyncMechSem(server_logfile, 0, SYNC_OP_MUTEX_INIT, SYNC_ROLE_PRODUCER, 0, 0) < 0){
+	if(logSyncMech(server_logfile, 0, SYNC_OP_MUTEX_INIT, SYNC_ROLE_PRODUCER, 0) < 0){
 		printf("Log sync mech sum error!\n");
 	}
 	if(pthread_mutex_init(&server_run_mutex, NULL)){
@@ -222,8 +231,13 @@ int main(int argc, char* argv[]){
 		printf("Log sync mech sum error!\n");
 	}
 	sem_init(&full, 0, 0);
+	int sem_t_value;
 
 	while(server_run){
+		if(sem_getvalue(&empty, &sem_t_value) < 0){
+			perror("sem_getvalue");
+			exit(-1);
+		}
 		if(logSyncMechSem(server_logfile, 0, SYNC_OP_SEM_WAIT, SYNC_ROLE_PRODUCER, 0, 0) < 0){
 			printf("Log sync mech sum error!\n");
 		}
@@ -244,10 +258,14 @@ int main(int argc, char* argv[]){
 		printf("Size read: %d\n", request->length);
 		printf("main:%d\n", server_run);
 		
-		if(logSyncMechSem(server_logfile, 0, SYNC_OP_SEM_POST, SYNC_ROLE_PRODUCER, 0, 0) < 0){
+		sem_post(&full);
+		if(sem_getvalue(&full, &sem_t_value) < 0){
+			perror("sem_getvalue");
+			exit(-1);
+		}
+		if(logSyncMechSem(server_logfile, 0, SYNC_OP_SEM_POST, SYNC_ROLE_PRODUCER, request->value.header.pid, sem_t_value) < 0){
 			printf("Log sync mech sum error!\n");
 		}
-		sem_post(&full);
 		printf("main:%d\n", server_run);
 		free(request);
 	}
@@ -297,7 +315,7 @@ void server_help(){
 }
 
 void read_srv_fifo(int srv_fifo, tlv_request_t* request){
-	if(logSyncMechSem(server_logfile, 0, SYNC_OP_MUTEX_LOCK, SYNC_ROLE_PRODUCER, 0, 0) < 0){
+	if(logSyncMech(server_logfile, 0, SYNC_OP_MUTEX_LOCK, SYNC_ROLE_PRODUCER, 0) < 0){
 		printf("Log sync mech sum error!\n");
 	}
 	if(pthread_mutex_lock(&srv_mutex)){
@@ -344,7 +362,7 @@ void read_srv_fifo(int srv_fifo, tlv_request_t* request){
 	request->length = length;
 	request->value = value;
 
-	if(logSyncMechSem(server_logfile, 0, SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_PRODUCER, 0, 0) < 0){
+	if(logSyncMech(server_logfile, 0, SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_PRODUCER, 0) < 0){
 		printf("Log sync mech sum error!\n");
 	}
 	if(pthread_mutex_unlock(&srv_mutex)){
