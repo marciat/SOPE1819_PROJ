@@ -26,7 +26,7 @@ void salt_generator(char* salt){
 	salt[SALT_LEN] = '\0';
 }
 
-ret_code_t create_client_account(req_value_t* client_information, int thread_id, tlv_reply_t *reply){
+ret_code_t create_client_account(req_value_t* client_information, int thread_id, uint32_t delay, tlv_reply_t *reply){
 	
 	reply->type = OP_CREATE_ACCOUNT;
 	reply->length = sizeof(rep_header_t);
@@ -36,7 +36,24 @@ ret_code_t create_client_account(req_value_t* client_information, int thread_id,
 		return RC_OP_NALLOW;
 	}
 
+	if(logSyncMechSem(server_logfile, pthread_self(), SYNC_OP_MUTEX_LOCK, SYNC_ROLE_CONSUMER, 0, 0) < 0){
+		printf("Log sync mech sum error!\n");
+	}
+
+	if(pthread_mutex_lock(&account_mutex)){
+		perror("pthread_mutex_lock");
+		exit(-1);
+	}
+	usleep(delay*1000);
+
 	if(client_information->create.account_id == 0 || accounts[client_information->create.account_id].account_id != 0){
+		if(logSyncMechSem(server_logfile, pthread_self(), SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_CONSUMER, 0, 0) < 0){
+			printf("Log sync mech sum error!\n");
+		}
+		if(pthread_mutex_unlock(&account_mutex)){
+			perror("pthread_mutex_unlock");
+			exit(-1);
+		}
 		return RC_ID_IN_USE;
 	}
 
@@ -50,6 +67,14 @@ ret_code_t create_client_account(req_value_t* client_information, int thread_id,
 	printf("Balance: %d\n", client_information->create.balance);
 
 	accounts[account.account_id] = account;
+
+	if(logSyncMechSem(server_logfile, pthread_self(), SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_CONSUMER, 0, 0) < 0){
+		printf("Log sync mech sum error!\n");
+	}
+	if(pthread_mutex_unlock(&account_mutex)){
+		perror("pthread_mutex_unlock");
+		exit(-1);
+	}
 
 	if(logAccountCreation(server_logfile, thread_id, &account) < 0){
 		printf("Log account creation error!\n");
@@ -78,7 +103,7 @@ ret_code_t create_admin_account(char* admin_password, int thread_id){
 }
 
 
-ret_code_t money_transfer(uint32_t account_id, char* password, uint32_t new_account_id, uint32_t amount, tlv_reply_t *reply){
+ret_code_t money_transfer(uint32_t account_id, char* password, uint32_t new_account_id, uint32_t amount, uint32_t delay, tlv_reply_t *reply){
 	
 	reply->type = OP_TRANSFER;
 	reply->length = sizeof(rep_header_t) + sizeof(rep_transfer_t);
@@ -91,6 +116,7 @@ ret_code_t money_transfer(uint32_t account_id, char* password, uint32_t new_acco
 		perror("pthread_mutex_lock");
 		exit(-1);
 	}
+	usleep(delay*1000);
 
 	if(account_id == 0 || new_account_id == 0){
 		if(logSyncMechSem(server_logfile, pthread_self(), SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_CONSUMER, 0, 0) < 0){
@@ -124,6 +150,7 @@ ret_code_t money_transfer(uint32_t account_id, char* password, uint32_t new_acco
 			perror("pthread_mutex_unlock");
 			exit(-1);
 		}
+		reply->value.transfer.balance = accounts[account_id].balance;
 		return RC_SAME_ID;
 	}
 
@@ -140,15 +167,6 @@ ret_code_t money_transfer(uint32_t account_id, char* password, uint32_t new_acco
 		}
 		reply->value.transfer.balance = 0;
 		return RC_LOGIN_FAIL;
-	}
-
-	if(account_id == new_account_id){
-		if(pthread_mutex_unlock(&account_mutex)){
-			perror("pthread_mutex_unlock");
-			exit(-1);
-		}
-		reply->value.transfer.balance = accounts[account_id].balance;
-		return RC_SAME_ID;
 	}
 
 	if(accounts[account_id].balance - amount < MIN_BALANCE){
@@ -192,7 +210,7 @@ ret_code_t money_transfer(uint32_t account_id, char* password, uint32_t new_acco
 }
 
 
-ret_code_t check_balance(uint32_t account_id, char* password, tlv_reply_t *reply){
+ret_code_t check_balance(uint32_t account_id, char* password, uint32_t delay, tlv_reply_t *reply){
 
 	reply->type = OP_BALANCE;
 	reply->length = sizeof(rep_header_t) + sizeof(rep_balance_t);
@@ -206,6 +224,7 @@ ret_code_t check_balance(uint32_t account_id, char* password, tlv_reply_t *reply
 		perror("pthread_mutex_lock");
 		exit(-1);
 	}
+	usleep(delay*1000);
 
 	if(account_id == 0){
 		if(logSyncMechSem(server_logfile, pthread_self(), SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_CONSUMER, 0, 0) < 0){

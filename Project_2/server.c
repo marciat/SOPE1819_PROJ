@@ -62,7 +62,7 @@ void* bank_office(){
 		switch(request->type){
 			case OP_CREATE_ACCOUNT:
 				printf("create\n");
-				ret_value = create_client_account(&request->value, pthread_self(), &reply);
+				ret_value = create_client_account(&request->value, pthread_self(), request->value.header.op_delay_ms, &reply);
 				reply.value.header.ret_code = ret_value;
 				send_reply(request, &reply);
 				if(logReply(server_logfile, pthread_self(), &reply) < 0){
@@ -71,7 +71,7 @@ void* bank_office(){
 				break;
 			case OP_BALANCE:
 				printf("balance\n");
-				ret_value = check_balance(request->value.header.account_id, request->value.header.password, &reply);
+				ret_value = check_balance(request->value.header.account_id, request->value.header.password, request->value.header.op_delay_ms, &reply);
 				reply.value.header.ret_code = ret_value;
 				send_reply(request, &reply);
 				if(logReply(server_logfile, pthread_self(), &reply) < 0){
@@ -80,7 +80,7 @@ void* bank_office(){
 				break;
 			case OP_TRANSFER:
 				printf("transfer\n");
-				ret_value = money_transfer(request->value.header.account_id, request->value.header.password, request->value.transfer.account_id, request->value.transfer.amount, &reply);
+				ret_value = money_transfer(request->value.header.account_id, request->value.header.password, request->value.transfer.account_id, request->value.transfer.amount, request->value.header.op_delay_ms, &reply);
 				reply.value.header.ret_code = ret_value;
 				send_reply(request, &reply);
 				if(logReply(server_logfile, pthread_self(), &reply) < 0){
