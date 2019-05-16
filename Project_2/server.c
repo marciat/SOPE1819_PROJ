@@ -25,6 +25,7 @@ sem_t empty, full;
 bool server_run;
 pthread_mutex_t server_run_mutex;
 pthread_cond_t srv_cond;
+int write_fifo;
 
 Queue* request_queue;
 
@@ -43,6 +44,7 @@ void* bank_office(void* index){
 				printf("Log sync mech sum error!\n");
 			}
 			pthread_mutex_unlock(&server_run_mutex);
+			free(request);
 			break;
 		}
 		if(logSyncMech(server_logfile, thread_index, SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_CONSUMER, pthread_self()) < 0){
@@ -62,15 +64,21 @@ void* bank_office(void* index){
 			perror("sem_wait");
 			pthread_exit(NULL);
 		}
-
-		printf("CONDWAIT\n");
-		while(isEmpty(request_queue)){
-			if(pthread_cond_wait(&srv_cond, &srv_mutex)){
-				perror("pthread_cond_wait");
-			}
+		pthread_mutex_lock(&server_run_mutex);
+		if(!server_run){
+			pthread_mutex_unlock(&server_run_mutex);
+			break;
 		}
-		*request = Dequeue(request_queue)->info;
+		pthread_mutex_unlock(&server_run_mutex);
 		
+		*request = Dequeue(request_queue)->info;
+		///////////////////////////
+		///////////////////////////
+		if(request == NULL){
+			break;
+		}
+		///////////////////////////
+		///////////////////////////
 		if(sem_post(&empty)){
 			perror("sem_post");
 			pthread_exit(NULL);
@@ -117,6 +125,7 @@ void* bank_office(void* index){
 					pthread_mutex_lock(&server_run_mutex);
 					server_run = false;
 					pthread_mutex_unlock(&server_run_mutex);
+					close(write_fifo);
 					reply.type = OP_SHUTDOWN;
 					reply.length = sizeof(rep_header_t);
 					reply.value.header.account_id = 0;
@@ -125,13 +134,14 @@ void* bank_office(void* index){
 					if(logReply(server_logfile, thread_index, &reply) < 0){
 						printf("Log reply error!\n");
 					}	
-					int i = 0;
+					/*int i = 0;
 					while(i < MAX_BANK_OFFICES){
 						sem_post(&full);
 						sem_post(&empty);
 						i++;
-					}
-					pthread_cond_broadcast(&srv_cond);
+					}*/
+					//pthread_cond_broadcast(&srv_cond);
+
 				}
 				//SHUTDOWN SERVER - Terminar ciclo dos balcões
 				//Verificar no server se foi recebida a operação (variável global que indica se pode encerrar) 
@@ -144,9 +154,7 @@ void* bank_office(void* index){
 		free(request);
 	}
 
-	printf("ciclo while thread %d terminado\n", thread_index);
-
-	pthread_exit(NULL); 
+	printf("ciclo while thread %d terminado\n", thread_index); 
 
 	return NULL;
 }
@@ -230,6 +238,12 @@ int main(int argc, char* argv[]){
 		exit(-1);
 	}
 
+	write_fifo = open(SERVER_FIFO_PATH, O_WRONLY);
+	if(write_fifo < 0){
+		perror("open write fifo");
+		exit(-1);
+	}
+
 	request_queue = ConstructQueue(5000);
 
 	int* thread_index = malloc(sizeof(int)*num_bank_offices);
@@ -260,6 +274,24 @@ int main(int argc, char* argv[]){
 	int sem_t_value;
 
 	while(true){
+		
+		tlv_request_t* request = malloc(MAX_PASSWORD_LEN*2 + 30);
+		int read_val;
+		read_val = read_srv_fifo(srv_fifo, request);
+		if(read_val < 0){
+			exit(-1);
+		}
+		pthread_mutex_lock(&server_run_mutex);
+		if(!server_run && read_val == 0){
+			free(request);
+			pthread_mutex_unlock(&server_run_mutex);
+			break;
+		}
+		pthread_mutex_unlock(&server_run_mutex);
+		if(logRequest(server_logfile, 0, request) < 0){
+			printf("Log request error!\n");
+		}
+
 		if(sem_getvalue(&empty, &sem_t_value) < 0){
 			perror("sem_getvalue");
 			exit(-1);
@@ -267,33 +299,12 @@ int main(int argc, char* argv[]){
 		if(logSyncMechSem(server_logfile, 0, SYNC_OP_SEM_WAIT, SYNC_ROLE_PRODUCER, 0, 0) < 0){
 			printf("Log sync mech sum error!\n");
 		}
-		pthread_mutex_lock(&server_run_mutex);
-		if(!server_run){
-			break;
-		}
-		pthread_mutex_unlock(&server_run_mutex);
+	
 		if(sem_wait(&empty)){
 			perror("sem_wait");
 			exit(-1);
 		}
-		//printf("main:%d\n", server_run);
-		tlv_request_t* request = malloc(MAX_PASSWORD_LEN*2 + 30);
-		//printf("main:%d\n", server_run);
-		read_srv_fifo(srv_fifo, request);
-		if(logRequest(server_logfile, 0, request) < 0){
-			printf("Log request error!\n");
-		}
-		pthread_mutex_lock(&server_run_mutex);
-		if(!server_run){
-			free(request);
-			break;
-		}
-		pthread_mutex_unlock(&server_run_mutex);
-		//printf("main:%d\n", server_run);
 		Enqueue(request_queue, request);
-		//printf("main:%d\n", server_run);
-		//printf("Size read: %d\n", request->length);
-		//printf("main:%d\n", server_run);
 		
 		if(sem_post(&full)){
 			perror("sem_post");
@@ -312,6 +323,10 @@ int main(int argc, char* argv[]){
 			break;
 		}
 		pthread_mutex_unlock(&server_run_mutex);
+	}
+	
+	for(int i = 0; i < num_bank_offices; i++){
+		sem_post(&full);
 	}
 
 	for(int i = 0; i < num_bank_offices; i++){ //Joining all threads before exiting
@@ -360,7 +375,7 @@ void server_help(){
 	printf("	This argument represents the administrator password. This have to be between quotation marks.\n");
 }
 
-void read_srv_fifo(int srv_fifo, tlv_request_t* request){
+int read_srv_fifo(int srv_fifo, tlv_request_t* request){
 	if(logSyncMech(server_logfile, 0, SYNC_OP_MUTEX_LOCK, SYNC_ROLE_PRODUCER, 0) < 0){
 		printf("Log sync mech sum error!\n");
 	}
@@ -373,36 +388,21 @@ void read_srv_fifo(int srv_fifo, tlv_request_t* request){
 	uint32_t op_type;
 	uint32_t length;
 
-	while((read_value = read(srv_fifo, &op_type, sizeof(int))) == 0){
-		if(read_value < 0){
-			perror("read server fifo");
-		}
-		/*if(pthread_cond_wait(&srv_cond, &srv_mutex)){
-			perror("pthread_cond_wait");
-		}*/
-	}
+	if((read_value = read(srv_fifo, &op_type, sizeof(int))) <= 0)
+		return read_value;
+	
 	printf("%d\n", op_type);
-	while((read_value = read(srv_fifo, &length, sizeof(uint32_t))) == 0){
-		if(read_value < 0){
-			perror("read server fifo");
-		}
-		/*if(pthread_cond_wait(&srv_cond, &srv_mutex)){
-			perror("pthread_cond_wait");
-		}*/
-	}
+	if((read_value = read(srv_fifo, &length, sizeof(uint32_t))) <= 0)
+		return read_value;
+	
 	printf("%d\n", length);
 
 	read_size+= length;
 	req_value_t value;
 
-	while((read_value = read(srv_fifo, &value, read_size)) == 0){
-		if(read_value < 0){
-			perror("read server fifo");
-		}
-		/*if(pthread_cond_wait(&srv_cond, &srv_mutex)){
-			perror("pthread_cond_wait");
-		}*/
-	}
+	if((read_value = read(srv_fifo, &value, read_size)) <= 0)
+		return read_value;
+	
 
 	request->type = op_type;
 	request->length = length;
@@ -414,6 +414,8 @@ void read_srv_fifo(int srv_fifo, tlv_request_t* request){
 	if(pthread_mutex_unlock(&srv_mutex)){
 		perror("pthread_mutex_unlock");
 	}
+
+	return 0;
 }
 
 void send_reply(tlv_request_t* request, tlv_reply_t* reply){
