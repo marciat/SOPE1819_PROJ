@@ -445,6 +445,7 @@ ret_code_t shutdown_server(uint32_t account_id, char* password, uint32_t delay, 
 			perror("pthread_mutex_unlock");
 			exit(-1);
 		}
+		reply->length = sizeof(rep_header_t);
 		return RC_LOGIN_FAIL;
 	}
 
@@ -456,6 +457,7 @@ ret_code_t shutdown_server(uint32_t account_id, char* password, uint32_t delay, 
 			perror("pthread_mutex_unlock");
 			exit(-1);
 		}
+		reply->length = sizeof(rep_header_t);
 		return RC_OP_NALLOW;
 	}
 		

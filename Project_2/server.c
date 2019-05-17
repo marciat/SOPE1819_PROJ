@@ -204,9 +204,6 @@ void* bank_office(void* index){
 
 					close(write_fifo);
 				}	
-				else{
-					reply.value.shutdown.active_offices = 0;
-				}		
 
 				reply.value.header.ret_code = ret_value;
 				send_reply(request, &reply);
