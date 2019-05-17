@@ -27,6 +27,9 @@ pthread_mutex_t server_run_mutex;
 pthread_mutex_t request_queue_mutex;
 int write_fifo;
 
+unsigned num_run_threads;
+pthread_mutex_t run_threads_mutex;
+
 Queue* request_queue;
 
 void* bank_office(void* index){
@@ -36,52 +39,92 @@ void* bank_office(void* index){
 	while(true){
 		tlv_request_t* request = malloc(MAX_PASSWORD_LEN*2 + 30);
 		if(logSyncMech(server_logfile, thread_index, SYNC_OP_MUTEX_LOCK, SYNC_ROLE_CONSUMER, pthread_self()) < 0){
-			printf("Log sync mech sum error!\n");
+			printf("Log sync mech error!\n");
 		}
-		pthread_mutex_lock(&server_run_mutex);
+		if(pthread_mutex_lock(&server_run_mutex) < 0){
+			perror("pthread_mutex_lock");
+			pthread_exit((void*)-1);
+		}
 		if(!server_run){
 			if(logSyncMech(server_logfile, thread_index, SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_CONSUMER, pthread_self()) < 0){
-				printf("Log sync mech sum error!\n");
+				printf("Log sync mech error!\n");
 			}
-			pthread_mutex_unlock(&server_run_mutex);
+			if(pthread_mutex_unlock(&server_run_mutex) < 0){
+				perror("pthread_mutex_unlock");
+				pthread_exit((void*)-1);
+			}
 			free(request);
 			break;
 		}
 		if(logSyncMech(server_logfile, thread_index, SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_CONSUMER, pthread_self()) < 0){
-			printf("Log sync mech sum error!\n");
+			printf("Log sync mech error!\n");
 		}
-		pthread_mutex_unlock(&server_run_mutex);
+		if(pthread_mutex_unlock(&server_run_mutex) < 0){
+			perror("pthread_mutex_unlock");
+			pthread_exit((void*)-1);
+		}
 
 		if(sem_getvalue(&full, &sem_t_value) < 0){ 
 			perror("sem_getvalue");
-			exit(-1);
+			pthread_exit((void*)-1);
 		}
 		if(logSyncMechSem(server_logfile, thread_index, SYNC_OP_SEM_WAIT, SYNC_ROLE_CONSUMER, pthread_self(), sem_t_value) < 0){
-			printf("Log sync mech sum error!\n");
+			printf("Log sync mech sem error!\n");
 		}
-		printf("SEMFULL\n");
+
 		if(sem_wait(&full)){
 			perror("sem_wait");
-			pthread_exit(NULL);
+			pthread_exit((void*)-1);
 		}
-		pthread_mutex_lock(&server_run_mutex);
+		if(pthread_mutex_lock(&server_run_mutex) < 0){
+			perror("pthread_mutex_lock");
+			pthread_exit((void*)-1);
+		}
 		if(!server_run){
-			pthread_mutex_unlock(&server_run_mutex);
+			if(pthread_mutex_unlock(&server_run_mutex) < 0){
+				perror("pthread_mutex_unlock");
+				pthread_exit((void*)-1);
+			}
 			break;
 		}
-		pthread_mutex_unlock(&server_run_mutex);
+		if(pthread_mutex_unlock(&server_run_mutex) < 0){
+			perror("pthread_mutex_unlock");
+			pthread_exit((void*)-1);
+		}
 		
 		if(logSyncMech(server_logfile, thread_index, SYNC_OP_MUTEX_LOCK, SYNC_ROLE_CONSUMER, pthread_self()) < 0){
-			printf("Log sync mech sum error!\n");
+			printf("Log sync mech error!\n");
 		}
-		pthread_mutex_lock(&request_queue_mutex);
+		if(pthread_mutex_lock(&request_queue_mutex) < 0){
+			perror("pthread_mutex_lock");
+			pthread_exit((void*)-1);
+		}
 
 		*request = Dequeue(request_queue)->info;
 
-		if(logSyncMech(server_logfile, thread_index, SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_CONSUMER, pthread_self()) < 0){
-			printf("Log sync mech sum error!\n");
+		if(logSyncMech(server_logfile, thread_index, SYNC_OP_MUTEX_LOCK, SYNC_ROLE_CONSUMER, pthread_self()) < 0){
+			printf("Log sync mech error!\n");
 		}
-		pthread_mutex_unlock(&request_queue_mutex);
+		if(pthread_mutex_lock(&run_threads_mutex) < 0){
+			perror("pthread_mutex_lock");
+			pthread_exit((void*)-1);
+		}
+		num_run_threads++;
+		if(logSyncMech(server_logfile, thread_index, SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_CONSUMER, pthread_self()) < 0){
+			printf("Log sync mech error!\n");
+		}
+		if(pthread_mutex_unlock(&run_threads_mutex) < 0){
+			perror("pthread_mutex_unlock");
+			pthread_exit((void*)-1);
+		}
+
+		if(logSyncMech(server_logfile, thread_index, SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_CONSUMER, pthread_self()) < 0){
+			printf("Log sync mech error!\n");
+		}
+		if(pthread_mutex_unlock(&request_queue_mutex) < 0){
+			perror("pthread_mutex_unlock");
+			pthread_exit((void*)-1);
+		}
 		
 		if(request == NULL){
 			break;
@@ -89,14 +132,14 @@ void* bank_office(void* index){
 
 		if(sem_post(&empty)){
 			perror("sem_post");
-			pthread_exit(NULL);
+			pthread_exit((void*)-1);
 		}
 		if(sem_getvalue(&full, &sem_t_value) < 0){ 
 			perror("sem_getvalue");
-			exit(-1);
+			pthread_exit((void*)-1);
 		}
 		if(logSyncMechSem(server_logfile, thread_index, SYNC_OP_SEM_POST, SYNC_ROLE_CONSUMER, request->value.header.pid, sem_t_value) < 0){
-			printf("Log sync mech sum error!\n");
+			printf("Log sync mech sem error!\n");
 		}
 
 		ret_code_t ret_value;
@@ -132,13 +175,39 @@ void* bank_office(void* index){
 				ret_value = shutdown_server(request->value.header.account_id, request->value.header.password, request->value.header.op_delay_ms, &reply, thread_index);
 				
 				if(ret_value == RC_OK){
-					pthread_mutex_lock(&server_run_mutex);
+					if(pthread_mutex_lock(&server_run_mutex) < 0){
+						perror("pthread_mutex_lock");
+						pthread_exit((void*)-1);
+					}
 					server_run = false;
-					pthread_mutex_unlock(&server_run_mutex);
-					close(write_fifo);
-				}			
+					if(pthread_mutex_unlock(&server_run_mutex) < 0){
+						perror("pthread_mutex_unlock");
+						pthread_exit((void*)-1);
+					}
 
-				reply.value.shutdown.active_offices = 0;
+					if(logSyncMech(server_logfile, thread_index, SYNC_OP_MUTEX_LOCK, SYNC_ROLE_CONSUMER, pthread_self()) < 0){
+						printf("Log sync mech error!\n");
+					}
+					if(pthread_mutex_lock(&run_threads_mutex) < 0){
+						perror("pthread_mutex_lock");
+						pthread_exit((void*)-1);
+					}
+					num_run_threads--;
+					reply.value.shutdown.active_offices = num_run_threads;
+					if(logSyncMech(server_logfile, thread_index, SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_CONSUMER, pthread_self()) < 0){
+						printf("Log sync mech error!\n");
+					}
+					if(pthread_mutex_unlock(&run_threads_mutex) < 0){
+						perror("pthread_mutex_unlock");
+						pthread_exit((void*)-1);
+					}
+
+					close(write_fifo);
+				}	
+				else{
+					reply.value.shutdown.active_offices = 0;
+				}		
+
 				reply.value.header.ret_code = ret_value;
 				send_reply(request, &reply);
 				if(logReply(server_logfile, thread_index, &reply) < 0){
@@ -149,10 +218,23 @@ void* bank_office(void* index){
 				//error
 				break;
 		}
+		if(logSyncMech(server_logfile, thread_index, SYNC_OP_MUTEX_LOCK, SYNC_ROLE_CONSUMER, pthread_self()) < 0){
+			printf("Log sync mech error!\n");
+		}
+		if(pthread_mutex_lock(&run_threads_mutex) < 0){
+			perror("pthread_mutex_lock");
+			pthread_exit((void*)-1);
+		}
+		num_run_threads--;
+		if(logSyncMech(server_logfile, thread_index, SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_CONSUMER, pthread_self()) < 0){
+			printf("Log sync mech error!\n");
+		}
+		if(pthread_mutex_unlock(&run_threads_mutex) < 0){
+			perror("pthread_mutex_unlock");
+			pthread_exit((void*)-1);
+		}
 		free(request);
 	}
-
-	printf("ciclo while thread %d terminado\n", thread_index); 
 
 	return NULL;
 }
@@ -182,17 +264,17 @@ int main(int argc, char* argv[]){
 
 	if(strlen(argv[2]) > MAX_PASSWORD_LEN || strlen(argv[2]) < MIN_PASSWORD_LEN){
 		printf("Password length must be between 8 to 20 characters.\n");
-		exit(-2);
+		exit(-1);
 	}
 
 	if(!check_number(argv[1])){
 		printf("First argument must be a positive integer.\n");
-		exit(-3);
+		exit(-1);
 	}
 
 	if(atoi(argv[1]) > MAX_BANK_OFFICES || atoi(argv[1]) < 1 || strlen(argv[1]) > 9){
 		printf("Number of bank offices must be between 1 and 99.\n");
-		exit(-4);
+		exit(-1);
 	}
 
 	int num_bank_offices = atoi(argv[1]);
@@ -200,7 +282,7 @@ int main(int argc, char* argv[]){
 	create_admin_account(argv[2], 0);
 
 	if(logSyncMech(server_logfile, 0, SYNC_OP_MUTEX_INIT, SYNC_ROLE_PRODUCER, 0) < 0){
-		printf("Log sync mech sum error!\n");
+		printf("Log sync mech error!\n");
 	}
 	for(int i = 0; i < MAX_BANK_ACCOUNTS; i++){
 		if(pthread_mutex_init(&account_mutex[i], NULL)){
@@ -210,7 +292,7 @@ int main(int argc, char* argv[]){
 	}
 
 	if(logSyncMech(server_logfile, 0, SYNC_OP_MUTEX_INIT, SYNC_ROLE_PRODUCER, 0) < 0){
-		printf("Log sync mech sum error!\n");
+		printf("Log sync mech error!\n");
 	}
 	if(pthread_mutex_init(&srv_mutex, NULL)){
 		perror("pthread_mutex_init");
@@ -218,12 +300,21 @@ int main(int argc, char* argv[]){
 	}
 
 	if(logSyncMech(server_logfile, 0, SYNC_OP_MUTEX_INIT, SYNC_ROLE_PRODUCER, 0) < 0){
-		printf("Log sync mech sum error!\n");
+		printf("Log sync mech error!\n");
 	}
 	if(pthread_mutex_init(&server_run_mutex, NULL)){
 		perror("pthread_mutex_init");
 		exit(-1);
 	}
+
+	if(logSyncMech(server_logfile, 0, SYNC_OP_MUTEX_INIT, SYNC_ROLE_PRODUCER, 0) < 0){
+		printf("Log sync mech error");
+	}
+	if(pthread_mutex_init(&run_threads_mutex, NULL)){
+		perror("pthread_mutex_init");
+		exit(-1);
+	}
+	num_run_threads = 0;
 
 	threads = malloc(sizeof(pthread_t)*num_bank_offices); 
 
@@ -245,7 +336,7 @@ int main(int argc, char* argv[]){
 	}
 
 	if(logSyncMech(server_logfile, 0, SYNC_OP_MUTEX_INIT, SYNC_ROLE_PRODUCER, 0) < 0){
-		printf("Log sync mech sum error!\n");
+		printf("Log sync mech error!\n");
 	}
 
 	if(pthread_mutex_init(&request_queue_mutex, NULL)){
@@ -273,14 +364,21 @@ int main(int argc, char* argv[]){
 	}
 
 	if(logSyncMechSem(server_logfile, 0, SYNC_OP_SEM_INIT, SYNC_ROLE_PRODUCER, 0, 0) < 0){
-		printf("Log sync mech sum error!\n");
+		printf("Log sync mech sem error!\n");
 	}
-	sem_init(&empty, 0, num_bank_offices);
+	if(sem_init(&empty, 0, num_bank_offices) < 0){
+		perror("sem_init");
+		exit(-1);
+	}
 
 	if(logSyncMechSem(server_logfile, 0, SYNC_OP_SEM_INIT, SYNC_ROLE_PRODUCER, 0, 0) < 0){
-		printf("Log sync mech sum error!\n");
+		printf("Log sync mech sem error!\n");
 	}
-	sem_init(&full, 0, 0);
+	if(sem_init(&full, 0, 0) < 0){
+		perror("sem_init");
+		exit(-1);
+	}
+	
 	int sem_t_value;
 
 	while(true){
@@ -291,13 +389,22 @@ int main(int argc, char* argv[]){
 		if(read_val < 0){
 			exit(-1);
 		}
-		pthread_mutex_lock(&server_run_mutex);
+		if(pthread_mutex_lock(&server_run_mutex) < 0){
+			perror("pthread_mutex_lock");
+			exit(-1);
+		}
 		if(!server_run && read_val == 0){
 			free(request);
-			pthread_mutex_unlock(&server_run_mutex);
+			if(pthread_mutex_unlock(&server_run_mutex) < 0){
+				perror("pthread_mutex_unlock");
+				exit(-1);
+			}
 			break;
 		}
-		pthread_mutex_unlock(&server_run_mutex);
+		if(pthread_mutex_unlock(&server_run_mutex) < 0){
+			perror("pthread_mutex_unlock");
+			exit(-1);
+		}
 		if(logRequest(server_logfile, 0, request) < 0){
 			printf("Log request error!\n");
 		}
@@ -307,7 +414,7 @@ int main(int argc, char* argv[]){
 			exit(-1);
 		}
 		if(logSyncMechSem(server_logfile, 0, SYNC_OP_SEM_WAIT, SYNC_ROLE_PRODUCER, 0, 0) < 0){
-			printf("Log sync mech sum error!\n");
+			printf("Log sync mech sem error!\n");
 		}
 	
 		if(sem_wait(&empty)){
@@ -316,17 +423,22 @@ int main(int argc, char* argv[]){
 		}
 
 		if(logSyncMech(server_logfile, 0, SYNC_OP_MUTEX_LOCK, SYNC_ROLE_PRODUCER, 0) < 0){
-			printf("Log sync mech sum error!\n");
+			printf("Log sync mech error!\n");
 		}
-		pthread_mutex_lock(&request_queue_mutex);
-
+		if(pthread_mutex_lock(&request_queue_mutex) < 0){
+			perror("pthread_mutex_lock");
+			exit(-1);
+		}
 
 		Enqueue(request_queue, request);
 
 		if(logSyncMech(server_logfile, 0, SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_PRODUCER, 0) < 0){
-			printf("Log sync mech sum error!\n");
+			printf("Log sync mech error!\n");
 		}
-		pthread_mutex_unlock(&request_queue_mutex);
+		if(pthread_mutex_unlock(&request_queue_mutex) < 0){
+			perror("pthread_mutex_unlock");
+			exit(-1);
+		}
 		
 		if(sem_post(&full)){
 			perror("sem_post");
@@ -337,29 +449,36 @@ int main(int argc, char* argv[]){
 			exit(-1);
 		}
 		if(logSyncMechSem(server_logfile, 0, SYNC_OP_SEM_POST, SYNC_ROLE_PRODUCER, request->value.header.pid, sem_t_value) < 0){
-			printf("Log sync mech sum error!\n");
+			printf("Log sync mech sem error!\n");
 		}
-
-		pthread_mutex_lock(&server_run_mutex);
+		if(pthread_mutex_lock(&server_run_mutex) < 0){
+			perror("pthread_mutex_lock");
+			exit(-1);
+		}
 
 		free(request);
 		if(!server_run){
 			break;
 		}
-		pthread_mutex_unlock(&server_run_mutex);
+		if(pthread_mutex_unlock(&server_run_mutex) < 0){
+			perror("pthread_mutex_unlock");
+			exit(-1);
+		}
 	}
 	
 	for(int i = 0; i < num_bank_offices; i++){
-		sem_post(&full);
+		if(sem_post(&full) < 0){
+			perror("sem_post");
+			exit(-1);
+		}
 	}
 
 	for(int i = 0; i < num_bank_offices; i++){ //Joining all threads before exiting
-		printf("joining thread no %d\n", i);
+	
 		if(pthread_join(threads[i], NULL)){
 			perror("pthread_join");
 			exit(-1);
 		}
-		printf("joining thread no %d\n", i);
 		if(logBankOfficeClose(server_logfile, 0, i+1) < 0){
 			printf("Log bank office close error!\n");
 		}
@@ -401,7 +520,7 @@ void server_help(){
 
 int read_srv_fifo(int srv_fifo, tlv_request_t* request){
 	if(logSyncMech(server_logfile, 0, SYNC_OP_MUTEX_LOCK, SYNC_ROLE_PRODUCER, 0) < 0){
-		printf("Log sync mech sum error!\n");
+		printf("Log sync mech error!\n");
 	}
 	if(pthread_mutex_lock(&srv_mutex)){
 		perror("pthread_mutex_lock");
@@ -415,11 +534,8 @@ int read_srv_fifo(int srv_fifo, tlv_request_t* request){
 	if((read_value = read(srv_fifo, &op_type, sizeof(int))) <= 0)
 		return read_value;
 	
-	printf("%d\n", op_type);
 	if((read_value = read(srv_fifo, &length, sizeof(uint32_t))) <= 0)
 		return read_value;
-	
-	printf("%d\n", length);
 
 	read_size+= length;
 	req_value_t value;
@@ -433,7 +549,7 @@ int read_srv_fifo(int srv_fifo, tlv_request_t* request){
 	request->value = value;
 
 	if(logSyncMech(server_logfile, 0, SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_PRODUCER, 0) < 0){
-		printf("Log sync mech sum error!\n");
+		printf("Log sync mech error!\n");
 	}
 	if(pthread_mutex_unlock(&srv_mutex)){
 		perror("pthread_mutex_unlock");

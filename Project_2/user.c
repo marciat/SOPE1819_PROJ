@@ -48,37 +48,37 @@ int main(int argc, char *argv[])
 	if (!check_number(argv[1]))
 	{
 		printf("Account ID must be a positive integer.\n");
-		exit(-2);
+		exit(-1);
 	}
 
 	if (atoi(argv[1]) < 0 || atoi(argv[1]) > MAX_BANK_ACCOUNTS)
 	{
 		printf("Account ID must be between 0 and %d", MAX_BANK_ACCOUNTS);
-		exit(-3);
+		exit(-1);
 	}
 
 	if (strlen(argv[2]) > MAX_PASSWORD_LEN || strlen(argv[2]) < MIN_PASSWORD_LEN)
 	{
 		printf("Password length must be between 8 to 20 characters.\n");
-		exit(-4);
+		exit(-1);
 	}
 
 	if (!check_number(argv[3]))
 	{
 		printf("Operation delay must be a positive integer.\n");
-		exit(-5);
+		exit(-1);
 	}
 
 	if (!check_number(argv[4]))
 	{
 		printf("Operation code must be a positive integer.\n");
-		exit(-6);
+		exit(-1);
 	}
 
 	if (atoi(argv[4]) < 0 || atoi(argv[4]) > 3)
 	{
 		printf("Operation code must be between 0 and 3.\n");
-		exit(-7);
+		exit(-1);
 	}
 
 	if (atoi(argv[4]) == 1 || atoi(argv[4]) == 3)
@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
 		if (strlen(argv[5]) != 0)
 		{
 			printf("Operations 1 and 3 require an empty argument list.\n");
-			exit(-8);
+			exit(-1);
 		}
 	}
 
@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
 		if (strlen(argv[5]) == 0)
 		{
 			printf("Operations 0 and 2 require a non empty argument list.\n");
-			exit(-9);
+			exit(-1);
 		}
 	}
 
@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
 			free(new_id);
 			free(balance);
 			free(password);
-			exit(-10);
+			exit(-1);
 		}
 		strcpy(new_id, token);
 
@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
 			free(new_id);
 			free(balance);
 			free(password);
-			exit(-10);
+			exit(-1);
 		}
 		strcpy(balance, token);
 
@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
 			free(new_id);
 			free(balance);
 			free(password);
-			exit(-10);
+			exit(-1);
 		}
 		strcpy(password, token);
 
@@ -150,7 +150,7 @@ int main(int argc, char *argv[])
 			free(new_id);
 			free(balance);
 			free(password);
-			exit(-10);
+			exit(-1);
 		}
 
 		if (!check_number(new_id))
@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
 			free(new_id);
 			free(balance);
 			free(password);
-			exit(-10);
+			exit(-1);
 		}
 		if (atoi(new_id) > MAX_BANK_ACCOUNTS || atoi(new_id) < 1)
 		{
@@ -167,7 +167,7 @@ int main(int argc, char *argv[])
 			free(new_id);
 			free(balance);
 			free(password);
-			exit(-10);
+			exit(-1);
 		}
 
 		if (!check_number(balance) || strtoul(balance, NULL, 10) < MIN_BALANCE || strtoul(balance, NULL, 10) > MAX_BALANCE)
@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
 			free(new_id);
 			free(balance);
 			free(password);
-			exit(-10);
+			exit(-1);
 		}
 
 		if (strlen(password) < MIN_PASSWORD_LEN || strlen(password) > MAX_PASSWORD_LEN)
@@ -185,7 +185,7 @@ int main(int argc, char *argv[])
 			free(new_id);
 			free(balance);
 			free(password);
-			exit(-10);
+			exit(-1);
 		}
 
 		free(new_id);
@@ -209,7 +209,7 @@ int main(int argc, char *argv[])
 			printf("Last argument of operation 2 must be \"destination_id amount\".\n");
 			free(dest_id);
 			free(amount);
-			exit(-10);
+			exit(-1);
 		}
 		strcpy(dest_id, token);
 
@@ -219,7 +219,7 @@ int main(int argc, char *argv[])
 			printf("Last argument of operation 2 must be \"destination_id amount\".\n");
 			free(dest_id);
 			free(amount);
-			exit(-10);
+			exit(-1);
 		}
 		strcpy(amount, token);
 
@@ -229,7 +229,7 @@ int main(int argc, char *argv[])
 			printf("Last argument of operation 2 must be \"destination_id amount\".\n");
 			free(dest_id);
 			free(amount);
-			exit(-10);
+			exit(-1);
 		}
 
 		if (!check_number(dest_id))
@@ -237,14 +237,14 @@ int main(int argc, char *argv[])
 			printf("Destination account ID must be a positive integer between 1 and %d.\n", MAX_BANK_ACCOUNTS);
 			free(dest_id);
 			free(amount);
-			exit(-10);
+			exit(-1);
 		}
 		if (!check_number(amount) || strtoul(amount, NULL, 10) < MIN_BALANCE || strtoul(amount, NULL, 10) > MAX_BALANCE)
 		{
 			printf("Amount must be a positive integer between 1 and %ld.\n", MAX_BALANCE);
 			free(dest_id);
 			free(amount);
-			exit(-10);
+			exit(-1);
 		}
 
 		free(dest_id);
