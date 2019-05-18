@@ -25,7 +25,7 @@ sem_t empty, full;
 bool server_run;
 pthread_mutex_t server_run_mutex;
 pthread_mutex_t request_queue_mutex;
-int write_fifo;
+int write_fifo, srv_fifo;
 
 unsigned num_run_threads;
 pthread_mutex_t run_threads_mutex;
@@ -45,7 +45,7 @@ void* bank_office(void* index){
 			perror("pthread_mutex_lock");
 			pthread_exit((void*)-1);
 		}
-		if(!server_run){
+		if(!server_run && isEmpty(request_queue)){
 			if(logSyncMech(server_logfile, thread_index, SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_CONSUMER, pthread_self()) < 0){
 				printf("Log sync mech error!\n");
 			}
@@ -125,10 +125,6 @@ void* bank_office(void* index){
 			perror("pthread_mutex_unlock");
 			pthread_exit((void*)-1);
 		}
-		
-		if(request == NULL){
-			break;
-		}
 
 		if(sem_post(&empty)){
 			perror("sem_post");
@@ -203,6 +199,10 @@ void* bank_office(void* index){
 					}
 
 					close(write_fifo);
+					if(fchmod(srv_fifo, 0444) < 0){
+						perror("fchmod");
+						pthread_exit((void*)-1);
+					}
 				}	
 
 				reply.value.header.ret_code = ret_value;
@@ -320,7 +320,7 @@ int main(int argc, char* argv[]){
 		exit(-1);
 	}
 
-	int srv_fifo = open(SERVER_FIFO_PATH, O_RDONLY);
+	srv_fifo = open(SERVER_FIFO_PATH, O_RDONLY);
 	if(srv_fifo < 0){
 		perror("open server fifo");
 		exit(-1);
@@ -341,8 +341,7 @@ int main(int argc, char* argv[]){
 		exit(-1);
 	}
 	
-
-	request_queue = ConstructQueue(5000);
+	request_queue = ConstructQueue(num_bank_offices);
 
 	int* thread_index = malloc(sizeof(int)*num_bank_offices);
 
