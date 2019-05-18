@@ -353,7 +353,7 @@ int main(int argc, char* argv[]){
 			perror("pthread_create");
 			exit(-1);
 		}
-		if(logBankOfficeOpen(server_logfile, 0, tid) < 0){
+		if(logBankOfficeOpen(server_logfile, i, tid) < 0){
 			printf("Log bank office open error!\n");
 		}
 		threads[i-1] = tid;
@@ -571,7 +571,7 @@ void send_reply(tlv_request_t* request, tlv_reply_t* reply){
 	int usr_fifo = open(fifo_name, O_WRONLY | O_APPEND); //Opening server FIFO for writing
 	if (usr_fifo < 0)
 	{
-		reply->value.header.ret_code = RC_SRV_TIMEOUT;
+		reply->value.header.ret_code = RC_USR_DOWN;
 	}else{
 
 		if(write(usr_fifo, reply, sizeof(int)+sizeof(uint32_t)+reply->length) < 0){

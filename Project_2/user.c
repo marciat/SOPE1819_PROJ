@@ -275,15 +275,40 @@ int main(int argc, char *argv[])
 	}
 
 	int srv_fifo = open(SERVER_FIFO_PATH, O_WRONLY | O_APPEND); //Opening server FIFO for writing
-	if (srv_fifo < 0)
-	{
-		perror("open server fifo");
-		exit(-1);
-	}
-
 	if(logRequest(user_logfile, getpid(), request) < 0){
 		printf("Log request error!\n");
 	}
+	if (srv_fifo < 0)
+	{
+		tlv_reply_t fake_reply;
+		fake_reply.type = request->type;
+		fake_reply.value.header.account_id = request->value.header.account_id;
+		fake_reply.value.header.ret_code = RC_SRV_DOWN;
+		switch(fake_reply.type){
+			case OP_CREATE_ACCOUNT:
+				fake_reply.length = 8;
+				break;
+			case OP_BALANCE:
+				fake_reply.length = 12;
+				fake_reply.value.balance.balance = 0;
+				break;
+			case OP_TRANSFER:
+				fake_reply.length = 12;
+				fake_reply.value.transfer.balance = 0;
+				break;
+			case OP_SHUTDOWN:
+				fake_reply.length = 12;
+				fake_reply.value.shutdown.active_offices = 0;
+				break;
+			default:
+				break;
+		}
+		if(logReply(user_logfile, getpid(), &fake_reply) < 0){
+			printf("Log reply error!\n");
+		}
+		exit(-1);
+	}
+
 	write_srv_fifo(srv_fifo, request);
 
 	free(request);
@@ -320,7 +345,30 @@ int main(int argc, char *argv[])
 
 	read_user_fifo(user_fifo, &reply);
 
-	if(!timeout)
+	if(timeout){
+		reply.type = request->type;
+		reply.value.header.account_id = request->value.header.account_id;
+		reply.value.header.ret_code = RC_SRV_TIMEOUT;
+		switch(reply.type){
+			case OP_CREATE_ACCOUNT:
+				reply.length = 8;
+				break;
+			case OP_BALANCE:
+				reply.length = 12;
+				reply.value.balance.balance = 0;
+				break;
+			case OP_TRANSFER:
+				reply.length = 12;
+				reply.value.transfer.balance = 0;
+				break;
+			case OP_SHUTDOWN:
+				reply.length = 12;
+				reply.value.shutdown.active_offices = 0;
+				break;
+			default:
+				break;
+		}
+	}
 	if(logReply(user_logfile, getpid(), &reply) < 0){
 		printf("Log reply error!\n");
 	}
