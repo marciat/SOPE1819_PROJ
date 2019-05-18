@@ -498,6 +498,43 @@ int main(int argc, char* argv[]){
 		exit(-1);
 	}
 
+	for(int i = 0; i < MAX_BANK_ACCOUNTS; i++){
+		if(pthread_mutex_destroy(&account_mutex[i])){
+			perror("pthread_mutex_destroy");
+			exit(-1);
+		}
+	}
+	
+	if(pthread_mutex_destroy(&srv_mutex)){
+			perror("pthread_mutex_destroy");
+			exit(-1);
+	}
+
+	if(pthread_mutex_destroy(&server_run_mutex)){
+			perror("pthread_mutex_destroy");
+			exit(-1);
+	}
+
+	if(pthread_mutex_destroy(&run_threads_mutex)){
+			perror("pthread_mutex_destroy");
+			exit(-1);
+	}
+
+	if(pthread_mutex_destroy(&request_queue_mutex)){
+			perror("pthread_mutex_destroy");
+			exit(-1);
+	}
+
+	if(sem_destroy(&empty)){
+			perror("sem_destroy");
+			exit(-1);
+	}
+
+	if(sem_destroy(&full)){
+			perror("sem_destroy");
+			exit(-1);
+	}
+
 	return 0;
 }
 
