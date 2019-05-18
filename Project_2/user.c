@@ -15,7 +15,6 @@
 
 //Header files created by us
 #include "user.h"
-#include "fifo.h"
 
 bool timeout;
 int user_fifo;
@@ -319,9 +318,6 @@ int main(int argc, char *argv[])
 		exit(-1);
 	}
 
-	
-
-	printf("sdasa\n");
 	user_fifo = open(fifo_name, O_RDONLY | O_NONBLOCK);
 
 	int flags;
@@ -334,7 +330,6 @@ int main(int argc, char *argv[])
 			perror("pthread_create");
 			exit(-1);
 		}
-	printf("sdasa\n");
 	if (user_fifo < 0)
 	{
 		perror("open user fifo");
@@ -394,9 +389,7 @@ int main(int argc, char *argv[])
 }
 
 void* zzz(){
-	printf("oladothread\n");
 	sleep(FIFO_TIMEOUT_SECS);
-	printf("upslseep\n");
 	int flags;
 	flags = fcntl(user_fifo, F_GETFL, 0);
 	flags |= O_NONBLOCK;
@@ -421,7 +414,6 @@ void read_user_fifo(int usr_fifo, tlv_reply_t *reply){
 	uint32_t op_type;
 	uint32_t length;
 
-	printf("sdasa\n");
 	while((read_value = read(usr_fifo, &op_type, sizeof(int))) == 0 && !timeout){
 		if(read_value < 0){
 			perror("read user fifo");
@@ -433,13 +425,11 @@ void read_user_fifo(int usr_fifo, tlv_reply_t *reply){
 		return;
 	}
 
-	printf("%d\n", op_type);
 	while((read_value = read(usr_fifo, &length, sizeof(uint32_t))) == 0){
 		if(read_value < 0){
 			perror("read user fifo");
 		}
 	}
-	printf("%d\n", length);
 
 	read_size+= length;
 	rep_value_t value;
@@ -453,8 +443,6 @@ void read_user_fifo(int usr_fifo, tlv_reply_t *reply){
 	reply->type = op_type;
 	reply->length = length;
 	reply->value = value;
-
-	printf("id sent: %d\n", reply->value.header.account_id);
 }
 
 void user_help()

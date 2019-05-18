@@ -431,7 +431,7 @@ ret_code_t shutdown_server(uint32_t account_id, char* password, uint32_t delay, 
 	usleep(delay*1000);
 
 	reply->type = OP_SHUTDOWN;
-	reply->length = sizeof(rep_header_t) + sizeof(rep_shutdown_t);
+	reply->length = sizeof(rep_header_t);
 	reply->value.header.account_id = account_id;
 
 	char new_hash[HASH_LEN];
@@ -445,7 +445,6 @@ ret_code_t shutdown_server(uint32_t account_id, char* password, uint32_t delay, 
 			perror("pthread_mutex_unlock");
 			exit(-1);
 		}
-		reply->length = sizeof(rep_header_t);
 		return RC_LOGIN_FAIL;
 	}
 
@@ -457,10 +456,10 @@ ret_code_t shutdown_server(uint32_t account_id, char* password, uint32_t delay, 
 			perror("pthread_mutex_unlock");
 			exit(-1);
 		}
-		reply->length = sizeof(rep_header_t);
 		return RC_OP_NALLOW;
 	}
 		
+	reply->length = sizeof(rep_header_t) + sizeof(rep_shutdown_t);
 	if(logSyncMech(server_logfile, thread_id, SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_CONSUMER, account_id) < 0){
 		printf("Log sync mech error!\n");
 	}
