@@ -17,13 +17,13 @@
 //Header files created by us
 #include "server.h"
 #include "account.h"
-#include "fifo.h"
 #include "reqqueue.h"
 
 pthread_t* threads;
 sem_t empty, full;
 bool server_run;
 pthread_mutex_t server_run_mutex;
+pthread_mutex_t srv_mutex;
 pthread_mutex_t request_queue_mutex;
 int write_fifo, srv_fifo;
 
@@ -34,7 +34,7 @@ Queue* request_queue;
 
 void* bank_office(void* index){
 	int thread_index = *(int*)index;
-	int sem_t_value;
+	int sem_t_value = 0;
 
 	while(true){
 		tlv_request_t* request = malloc(MAX_PASSWORD_LEN*2 + 30);
@@ -359,7 +359,7 @@ int main(int argc, char* argv[]){
 		threads[i-1] = tid;
 	}
 
-	if(logSyncMechSem(server_logfile, 0, SYNC_OP_SEM_INIT, SYNC_ROLE_PRODUCER, 0, 0) < 0){
+	if(logSyncMechSem(server_logfile, 0, SYNC_OP_SEM_INIT, SYNC_ROLE_PRODUCER, 0, num_bank_offices) < 0){
 		printf("Log sync mech sem error!\n");
 	}
 	if(sem_init(&empty, 0, num_bank_offices) < 0){
@@ -375,7 +375,7 @@ int main(int argc, char* argv[]){
 		exit(-1);
 	}
 	
-	int sem_t_value;
+	int sem_t_value = 0;
 
 	while(true){
 		
@@ -505,6 +505,8 @@ int main(int argc, char* argv[]){
 		}
 	}
 	
+	pthread_mutex_unlock(&srv_mutex);
+
 	if(pthread_mutex_destroy(&srv_mutex)){
 			perror("pthread_mutex_destroy");
 			exit(-1);
