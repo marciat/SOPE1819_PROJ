@@ -105,6 +105,9 @@ void* bank_office(void* index){
 		if(logSyncMech(server_logfile, thread_index, SYNC_OP_MUTEX_LOCK, SYNC_ROLE_CONSUMER, pthread_self()) < 0){
 			printf("Log sync mech error!\n");
 		}
+		if(logRequest(server_logfile, thread_index, request) < 0){
+			printf("Log request error!\n");
+		}
 		if(pthread_mutex_lock(&run_threads_mutex) < 0){
 			perror("pthread_mutex_lock");
 			pthread_exit((void*)-1);
