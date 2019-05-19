@@ -80,7 +80,7 @@ void* bank_office(void* index){
 			perror("pthread_mutex_lock");
 			pthread_exit((void*)-1);
 		}
-		if(!server_run){
+		if(!server_run && isEmpty(request_queue)){
 			if(pthread_mutex_unlock(&server_run_mutex) < 0){
 				perror("pthread_mutex_unlock");
 				pthread_exit((void*)-1);
@@ -278,9 +278,6 @@ int main(int argc, char* argv[]){
 
 	create_admin_account(argv[2], 0);
 
-	if(logSyncMech(server_logfile, 0, SYNC_OP_MUTEX_INIT, SYNC_ROLE_PRODUCER, 0) < 0){
-		printf("Log sync mech error!\n");
-	}
 	for(int i = 0; i < MAX_BANK_ACCOUNTS; i++){
 		if(pthread_mutex_init(&account_mutex[i], NULL)){
 			perror("pthread_mutex_init");
@@ -288,75 +285,19 @@ int main(int argc, char* argv[]){
 		}
 	}
 
-	if(logSyncMech(server_logfile, 0, SYNC_OP_MUTEX_INIT, SYNC_ROLE_PRODUCER, 0) < 0){
-		printf("Log sync mech error!\n");
-	}
 	if(pthread_mutex_init(&srv_mutex, NULL)){
 		perror("pthread_mutex_init");
 		exit(-1);
 	}
 
-	if(logSyncMech(server_logfile, 0, SYNC_OP_MUTEX_INIT, SYNC_ROLE_PRODUCER, 0) < 0){
-		printf("Log sync mech error!\n");
-	}
 	if(pthread_mutex_init(&server_run_mutex, NULL)){
 		perror("pthread_mutex_init");
 		exit(-1);
 	}
 
-	if(logSyncMech(server_logfile, 0, SYNC_OP_MUTEX_INIT, SYNC_ROLE_PRODUCER, 0) < 0){
-		printf("Log sync mech error");
-	}
 	if(pthread_mutex_init(&run_threads_mutex, NULL)){
 		perror("pthread_mutex_init");
 		exit(-1);
-	}
-	num_run_threads = 0;
-
-	threads = malloc(sizeof(pthread_t)*num_bank_offices); 
-
-	if(mkfifo(SERVER_FIFO_PATH, 0666)){
-		perror("mkfifo");
-		exit(-1);
-	}
-
-	srv_fifo = open(SERVER_FIFO_PATH, O_RDONLY);
-	if(srv_fifo < 0){
-		perror("open server fifo");
-		exit(-1);
-	}
-
-	write_fifo = open(SERVER_FIFO_PATH, O_WRONLY);
-	if(write_fifo < 0){
-		perror("open write fifo");
-		exit(-1);
-	}
-
-	if(logSyncMech(server_logfile, 0, SYNC_OP_MUTEX_INIT, SYNC_ROLE_PRODUCER, 0) < 0){
-		printf("Log sync mech error!\n");
-	}
-
-	if(pthread_mutex_init(&request_queue_mutex, NULL)){
-		perror("pthread_mutex_init");
-		exit(-1);
-	}
-	
-	request_queue = ConstructQueue(num_bank_offices);
-
-	int* thread_index = malloc(sizeof(int)*num_bank_offices);
-
-	for(int i = 1; i <= num_bank_offices; i++){
-		pthread_t tid;
-		thread_index[i-1] = i; 
-
-		if(pthread_create(&tid, NULL, bank_office, &thread_index[i-1])){
-			perror("pthread_create");
-			exit(-1);
-		}
-		if(logBankOfficeOpen(server_logfile, i, tid) < 0){
-			printf("Log bank office open error!\n");
-		}
-		threads[i-1] = tid;
 	}
 
 	if(logSyncMechSem(server_logfile, 0, SYNC_OP_SEM_INIT, SYNC_ROLE_PRODUCER, 0, num_bank_offices) < 0){
@@ -374,7 +315,51 @@ int main(int argc, char* argv[]){
 		perror("sem_init");
 		exit(-1);
 	}
+
+	num_run_threads = 0;
 	
+	threads = malloc(sizeof(pthread_t)*num_bank_offices); 
+
+	int* thread_index = malloc(sizeof(int)*num_bank_offices);
+
+	for(int i = 1; i <= num_bank_offices; i++){
+		pthread_t tid;
+		thread_index[i-1] = i; 
+
+		if(pthread_create(&tid, NULL, bank_office, &thread_index[i-1])){
+			perror("pthread_create");
+			exit(-1);
+		}
+		if(logBankOfficeOpen(server_logfile, i, tid) < 0){
+			printf("Log bank office open error!\n");
+		}
+		threads[i-1] = tid;
+	}
+
+	if(mkfifo(SERVER_FIFO_PATH, 0666)){
+		perror("mkfifo");
+		exit(-1);
+	}
+
+	srv_fifo = open(SERVER_FIFO_PATH, O_RDONLY);
+	if(srv_fifo < 0){
+		perror("open server fifo");
+		exit(-1);
+	}
+	
+	write_fifo = open(SERVER_FIFO_PATH, O_WRONLY);
+	if(write_fifo < 0){
+		perror("open write fifo");
+		exit(-1);
+	}
+
+	if(pthread_mutex_init(&request_queue_mutex, NULL)){
+		perror("pthread_mutex_init");
+		exit(-1);
+	}
+	
+	request_queue = ConstructQueue(num_bank_offices);
+
 	int sem_t_value = 0;
 
 	while(true){

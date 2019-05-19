@@ -39,8 +39,7 @@ static const char *SYNC_MECH_STR[] = {
   [SYNC_OP_COND_WAIT] = "COND_WAIT",
   [SYNC_OP_SEM_INIT] = "SEM_INIT",
   [SYNC_OP_SEM_POST] = "SEM_POST",
-  [SYNC_OP_SEM_WAIT] = "SEM_WAIT",
-  [SYNC_OP_MUTEX_INIT] = "MUTEX_INIT"};
+  [SYNC_OP_SEM_WAIT] = "SEM_WAIT"};
 
 static const char *SYNC_ROLE_STR[] = {
   [SYNC_ROLE_ACCOUNT] = "ACCOUNT",

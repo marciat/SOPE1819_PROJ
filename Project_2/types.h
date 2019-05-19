@@ -35,7 +35,6 @@ typedef enum sync_mech_op_type {
   SYNC_OP_MUTEX_LOCK,    // pthread_mutex_lock() call
   SYNC_OP_MUTEX_UNLOCK,  // pthread_mutex_unlock() call
   SYNC_OP_MUTEX_TRYLOCK, // pthread_mutex_trylock() call
-  SYNC_OP_MUTEX_INIT,    // pthread_mutex_init() call
   SYNC_OP_COND_SIGNAL,   // pthread_cond_signal() call
   SYNC_OP_COND_WAIT,     // pthread_cond_wait() call
   SYNC_OP_SEM_INIT,      // pthread_sem_init() call
