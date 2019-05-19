@@ -532,10 +532,10 @@ void server_help(){
 
 	printf("number_of_bank_offices:\n"); 
 	printf("	This argument is an integer that specifies the number of bank offices to create in the server.\n");
-	printf("	Max number of bank offices: 99\n\n");
+	printf("	Must be between 1 and 99\n\n");
 
 	printf("admin_password:\n");
-	printf("	This argument represents the administrator password. This have to be between quotation marks.\n");
+	printf("	This argument represents the administrator password. It has to be between %d and %d characters long.\n", MIN_PASSWORD_LEN, MAX_PASSWORD_LEN);
 }
 
 int read_srv_fifo(int srv_fifo, tlv_request_t* request){

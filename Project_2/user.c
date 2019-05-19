@@ -449,15 +449,15 @@ void user_help()
 {
 	printf("Usage: user id_account \"account_password\"\n");
 	printf("			requested_delay operation_code\n");
-	printf("			\"argument_1\"...\n");
+	printf("			\"arguments\"\n");
 	printf("Creates a homebanking server in your pc\n");
-	printf("Example: user 1 \"my_pass\" 3000 1 \"\"\n\n");
+	printf("Example: user 1 \"my_password\" 3000 1 \"\"\n\n");
 
 	printf("id_account:\n");
-	printf("	Id of the user account.\n\n");
+	printf("	Id of the user account. Must be an integer between 0 %d\n\n", MAX_BANK_ACCOUNTS);
 
 	printf("account_password:\n");
-	printf("	Password used to access the server.\n\n");
+	printf("	Password used to access the server. Must be between %d and %d characters long\n\n", MIN_PASSWORD_LEN, MAX_PASSWORD_LEN);
 
 	printf("requested_delay:\n");
 	printf("	Number of miliseconds to wait before start the operation.\n");
@@ -473,4 +473,7 @@ void user_help()
 
 	printf("list_of_arguments:\n");
 	printf("	Arguments requested by the operation.\n");
+	printf("	Operations 1 and 3 require and empty argument list.\n");
+	printf("	Operations 0 requires an id, a balance and a password separated by spaces.\n");
+	printf("	Operations 2 requires an id and an ammount separated by spaces.\n");
 }
