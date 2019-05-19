@@ -454,13 +454,13 @@ void user_help()
 	printf("Example: user 1 \"my_password\" 3000 1 \"\"\n\n");
 
 	printf("id_account:\n");
-	printf("	Id of the user account. Must be an integer between 0 %d\n\n", MAX_BANK_ACCOUNTS);
+	printf("	ID of the user account. Must be an integer between 0 and %d\n\n", MAX_BANK_ACCOUNTS);
 
 	printf("account_password:\n");
 	printf("	Password used to access the server. Must be between %d and %d characters long\n\n", MIN_PASSWORD_LEN, MAX_PASSWORD_LEN);
 
 	printf("requested_delay:\n");
-	printf("	Number of miliseconds to wait before start the operation.\n");
+	printf("	Number of milliseconds to wait before starting the operation.\n");
 	printf("	This variable is used to test the synchronization of processes and threads.\n\n");
 
 	printf("operation_code:\n");
@@ -475,5 +475,5 @@ void user_help()
 	printf("	Arguments requested by the operation.\n");
 	printf("	Operations 1 and 3 require and empty argument list.\n");
 	printf("	Operations 0 requires an id, a balance and a password separated by spaces.\n");
-	printf("	Operations 2 requires an id and an ammount separated by spaces.\n");
+	printf("	Operations 2 requires an id and an amount separated by spaces.\n");
 }
