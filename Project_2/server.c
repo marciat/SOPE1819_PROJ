@@ -190,6 +190,7 @@ void* bank_office(void* index){
 					}
 					num_run_threads--;
 					reply.value.shutdown.active_offices = num_run_threads;
+					num_run_threads++;
 					if(logSyncMech(server_logfile, thread_index, SYNC_OP_MUTEX_UNLOCK, SYNC_ROLE_CONSUMER, pthread_self()) < 0){
 						printf("Log sync mech error!\n");
 					}
