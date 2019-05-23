@@ -443,6 +443,10 @@ int main(int argc, char* argv[]){
 
 		free(request);
 		if(!server_run){
+			if(pthread_mutex_unlock(&server_run_mutex) < 0){
+				perror("pthread_mutex_unlock");
+				exit(-1);
+			}
 			break;
 		}
 		if(pthread_mutex_unlock(&server_run_mutex) < 0){

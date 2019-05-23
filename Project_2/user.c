@@ -279,6 +279,7 @@ int main(int argc, char *argv[])
 	}
 	if (srv_fifo < 0)
 	{
+		printf("DOWN\n");
 		tlv_reply_t fake_reply;
 		fake_reply.type = request->type;
 		fake_reply.value.header.account_id = request->value.header.account_id;
@@ -305,16 +306,22 @@ int main(int argc, char *argv[])
 		if(logReply(user_logfile, getpid(), &fake_reply) < 0){
 			printf("Log reply error!\n");
 		}
+		if (unlink(fifo_name))
+		{
+			perror("unlink");
+			exit(-1);
+		}
+		free(request);
 		exit(-1);
 	}
 
 	write_srv_fifo(srv_fifo, request);
 
-	free(request);
 
 	if (close(srv_fifo))
 	{
 		perror("close server fifo");
+		free(request);
 		exit(-1);
 	}
 
@@ -326,19 +333,25 @@ int main(int argc, char *argv[])
 
 	pthread_t tid;
 
-		if(pthread_create(&tid, NULL, zzz, NULL)){
-			perror("pthread_create");
-			exit(-1);
-		}
+	if(pthread_create(&tid, NULL, zzz, NULL)){
+		perror("pthread_create");
+		free(request);
+		exit(-1);
+	}
+	
 	if (user_fifo < 0)
 	{
 		perror("open user fifo");
+		free(request);
 		exit(-1);
 	}
 
 	tlv_reply_t reply;
 
 	read_user_fifo(user_fifo, &reply);
+
+	printf("type:%d\n", request->type);
+
 
 	if(timeout){
 		reply.type = request->type;
@@ -364,6 +377,7 @@ int main(int argc, char *argv[])
 				break;
 		}
 	}
+	free(request);
 	if(logReply(user_logfile, getpid(), &reply) < 0){
 		printf("Log reply error!\n");
 	}
@@ -421,7 +435,6 @@ void read_user_fifo(int usr_fifo, tlv_reply_t *reply){
 	}
 
 	if(timeout){
-		printf("timeout\n");
 		return;
 	}
 
