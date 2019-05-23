@@ -279,7 +279,6 @@ int main(int argc, char *argv[])
 	}
 	if (srv_fifo < 0)
 	{
-		printf("DOWN\n");
 		tlv_reply_t fake_reply;
 		fake_reply.type = request->type;
 		fake_reply.value.header.account_id = request->value.header.account_id;
@@ -349,9 +348,6 @@ int main(int argc, char *argv[])
 	tlv_reply_t reply;
 
 	read_user_fifo(user_fifo, &reply);
-
-	printf("type:%d\n", request->type);
-
 
 	if(timeout){
 		reply.type = request->type;
